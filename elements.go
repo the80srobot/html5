@@ -54,6 +54,16 @@ func Head(contents []html.Node, opts ...Option) *html.ElementNode {
 	return e
 }
 
+func Body(contents []html.Node, opts ...Option) *html.ElementNode {
+	e := &html.ElementNode{
+		Name:        "body",
+		IndentStyle: html.Block,
+		Contents:    contents,
+	}
+	applyOptions(e)
+	return e
+}
+
 func Meta(opts ...Option) *html.ElementNode {
 	e := &html.ElementNode{
 		Name:        "meta",
