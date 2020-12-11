@@ -3,7 +3,7 @@ package html5
 import (
 	"fmt"
 
-	"github.com/the80srobot/html/html5/html"
+	"github.com/the80srobot/html5/html"
 )
 
 type Option interface {
