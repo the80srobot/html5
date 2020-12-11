@@ -1,0 +1,95 @@
+package html
+
+import (
+	"errors"
+	"fmt"
+	"html"
+
+	"github.com/google/safehtml"
+)
+
+type StringTrust int16
+
+var ErrStringUntrusted = errors.New("cannnot satisfy trust level")
+
+const (
+	Untrusted StringTrust = iota
+	HTMLSafe
+	TextSafe
+	URLSafe
+	AttributeSafe
+	FullyTrusted
+)
+
+func (l StringTrust) String() string {
+	switch l {
+	case Untrusted:
+		return "Untrusted"
+	case HTMLSafe:
+		return "HTMLSafe"
+	case TextSafe:
+		return "TextSafe"
+	case URLSafe:
+		return "URLSafe"
+	case AttributeSafe:
+		return "AttributeSafe"
+	case FullyTrusted:
+		return "FullyTrusted"
+	default:
+		panic("unknown trust value")
+	}
+}
+
+type StringBinding struct {
+	Name  string
+	Trust StringTrust
+	tag   Tag
+}
+
+func (b *StringBinding) SafeString(valueTrust StringTrust, value string) (string, error) {
+	if valueTrust == FullyTrusted || valueTrust == b.Trust {
+		return value, nil
+	}
+
+	// Only untrusted values can be sanitized. No level of sanitization can make
+	// a value fully trusted for all contexts.
+	if valueTrust != Untrusted || b.Trust == FullyTrusted {
+		return "", fmt.Errorf("%w: cannot convert from %v to %v", ErrStringUntrusted, valueTrust, b.Trust)
+	}
+
+	return escape(value, b.Trust)
+}
+
+func escape(s string, trust StringTrust) (string, error) {
+	switch trust {
+	case HTMLSafe:
+		return escapeHTML(s)
+	case TextSafe:
+		return escapeText(s)
+	case URLSafe:
+		return escapeURL(s)
+	case AttributeSafe:
+		return escapeAttribute(s)
+	default:
+		panic("unknown trust level")
+	}
+}
+
+func escapeHTML(s string) (string, error) {
+	return "", errors.New("HTML fragments must currently be FullyTrusted")
+}
+
+func escapeText(s string) (string, error) {
+	return html.EscapeString(s), nil
+}
+
+func escapeURL(s string) (string, error) {
+	return safehtml.URLSanitized(s).String(), nil
+}
+
+func escapeAttribute(s string) (string, error) {
+	// TODO - I am sure this is somehow deficient. Possibly, there is no
+	// universal standard to which attributes should be escaped ,and we should
+	// always require a fully trusted string?
+	return "", errors.New("attributes must currently be FullyTrusted")
+}
