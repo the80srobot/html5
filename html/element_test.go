@@ -20,9 +20,9 @@ func TestElementNode(t *testing.T) {
 			input: &ElementNode{
 				IndentStyle: Block,
 				Name:        "p",
-				Attributes:  []Attribute{{Name: "id", Constant: FullyTrustedString("hello")}},
+				Attributes:  []Attribute{{Name: "id", Value: FullyTrustedString("hello")}},
 				Contents: []Node{
-					&TextNode{Constant: FullyTrustedString("Hello, World!"), IndentStyle: Block, Width: 1},
+					&TextNode{Value: FullyTrustedString("Hello, World!"), IndentStyle: Block, Width: 1},
 				}},
 			opts:   &Tidy,
 			output: "\n<p id=\"hello\">\n  Hello,\n  World!\n</p>",
@@ -33,11 +33,11 @@ func TestElementNode(t *testing.T) {
 				IndentStyle: Inline,
 				Name:        "a",
 				Attributes: []Attribute{
-					{Name: "href", Constant: FullyTrustedString("#title_1")},
-					{Name: "rel", Constant: FullyTrustedString("nofollow")},
-					{Name: "target", Constant: FullyTrustedString("_blank")},
+					{Name: "href", Value: FullyTrustedString("#title_1")},
+					{Name: "rel", Value: FullyTrustedString("nofollow")},
+					{Name: "target", Value: FullyTrustedString("_blank")},
 				},
-				Contents: []Node{&TextNode{Constant: FullyTrustedString("Hello!")}},
+				Contents: []Node{&TextNode{Value: FullyTrustedString("Hello!")}},
 			},
 			opts:   &Tidy,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
@@ -48,12 +48,12 @@ func TestElementNode(t *testing.T) {
 				IndentStyle: Inline,
 				Name:        "a",
 				Attributes: []Attribute{
-					{Name: "href", Binding: "href"},
-					{Name: "rel", Binding: "rel"},
-					{Name: "target", Binding: "target"},
+					{Name: "href", Value: Bind("href")},
+					{Name: "rel", Value: Bind("rel")},
+					{Name: "target", Value: Bind("target")},
 				},
 				Contents: []Node{
-					&TextNode{StringName: "hello"},
+					&TextNode{Value: Bind("hello")},
 				},
 			},
 			values: []ValueArg{

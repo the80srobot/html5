@@ -37,7 +37,7 @@ func (t Tag) subsection() int {
 	return t.v + 1
 }
 
-func (t Tag) findString(v []StringBinding) (int, error) {
+func (t Tag) findString(v []stringBinding) (int, error) {
 	if t.v < 1 {
 		return -1, fmt.Errorf("invalid string tag %v", t)
 	}
@@ -72,14 +72,14 @@ func (t Tag) String() string {
 	}
 }
 
-type StringBinding struct {
-	Name  string
-	Trust StringTrust
+type stringBinding struct {
+	name  string
+	trust StringTrust
 	tag   Tag
 }
 
-func (b *StringBinding) Convert(value SafeString) (string, error) {
-	return value.Convert(b.Trust)
+func (b *stringBinding) convert(value SafeString) (string, error) {
+	return value.Convert(b.trust)
 }
 
 // BindingSet is a collection of the dynamic properties of a page (bindings).
@@ -90,7 +90,7 @@ func (b *StringBinding) Convert(value SafeString) (string, error) {
 // with a page Template. Call Bind to create a ValueSet for the bindings in this
 // BindingSet.
 type BindingSet struct {
-	strings     []StringBinding
+	strings     []stringBinding
 	stringNames map[string]Tag
 
 	// Binding sets for subsections, which can be repeated in the ValueSet.
@@ -105,24 +105,24 @@ func (bs *BindingSet) lazyInit() {
 	}
 }
 
-// AddString creates a string binding at the given level of trust. It returns a
-// Tag, which can later be used to provide a value for this binding.
-func (bs *BindingSet) AddString(name string, trust StringTrust) Tag {
+// DeclareString creates a string binding at the given level of trust. It
+// returns a Tag, which can later be used to provide a value for this binding.
+func (bs *BindingSet) DeclareString(name string, trust StringTrust) Tag {
 	bs.lazyInit()
 
 	tag, ok := bs.stringNames[name]
 	if !ok {
 		idx := len(bs.strings)
 		tag = stringTag(idx)
-		bs.strings = append(bs.strings, StringBinding{Name: name, Trust: trust, tag: tag})
+		bs.strings = append(bs.strings, stringBinding{name: name, trust: trust, tag: tag})
 		bs.stringNames[name] = tag
 	}
 	return tag
 }
 
-// AddSubsection creates a subsection binding and returns a tag used to later
-// assign values to it.
-func (bs *BindingSet) AddSubsection(name string, subsectionBindings *BindingSet) Tag {
+// DeclareSubsection creates a subsection binding and returns a tag used to
+// later assign values to it.
+func (bs *BindingSet) DeclareSubsection(name string, subsectionBindings *BindingSet) Tag {
 	bs.lazyInit()
 
 	tag, ok := bs.subsectionNames[name]
@@ -267,7 +267,7 @@ func (vs *ValueSet) BindString(tag Tag, ss SafeString) error {
 	}
 
 	b := vs.BindingSet.strings[idx]
-	s, err := b.Convert(ss)
+	s, err := b.convert(ss)
 	if err != nil {
 		return fmt.Errorf("SafeString for %v: %w", tag, err)
 	}

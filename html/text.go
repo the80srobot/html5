@@ -7,14 +7,13 @@ import (
 )
 
 type TextNode struct {
-	Constant    SafeString
-	StringName  string
+	Value       SafeString
 	Width       int
 	IndentStyle IndentStyle
 }
 
 func (t *TextNode) String() string {
-	return fmt.Sprintf("&TextNode{constant=%q, binding=%v, width=%d, style=%v}", t.Constant, t.StringName, t.Width, t.IndentStyle)
+	return fmt.Sprintf("&TextNode{value=%v, width=%d, style=%v}", t.Value, t.Width, t.IndentStyle)
 }
 
 func (t *TextNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {

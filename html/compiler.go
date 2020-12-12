@@ -27,7 +27,7 @@ func (tc *templateCompiler) appendChunk(c chunk) {
 }
 
 func (tc *templateCompiler) appendStringBinding(name string, trust StringTrust) {
-	tag := tc.bindings.AddString(name, trust)
+	tag := tc.bindings.DeclareString(name, trust)
 	tc.appendChunk(stringBindingChunk{stringTag: tag})
 }
 
@@ -93,20 +93,21 @@ func appendAttribute(tc *templateCompiler, a *Attribute) error {
 	// Different attributes require different levels of trust (e.g. href
 	// contains URLs).
 	reqTrust, ok := requiredTrustPerAttribute[a.Name]
-	if a.Binding != "" {
-		if !ok {
-			reqTrust = FullyTrusted
+	if !ok {
+		reqTrust = FullyTrusted
+	}
+
+	if a.Value.Constant() {
+		constant, err := a.Value.Convert(reqTrust)
+		if err != nil {
+			return err
 		}
-		tc.appendStringBinding(a.Binding, reqTrust)
-		_, err := fmt.Fprint(tc, "\"")
+		_, err = fmt.Fprintf(tc, "%s\"", constant)
 		return err
 	}
 
-	constant, err := a.Constant.Convert(reqTrust)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(tc, "%s\"", constant)
+	tc.appendStringBinding(a.Value.binding, reqTrust)
+	_, err := fmt.Fprint(tc, "\"")
 	return err
 }
 
@@ -120,15 +121,15 @@ func appendIndent(tc *templateCompiler, depth int, indent string) error {
 }
 
 func appendText(tc *templateCompiler, depth int, text *TextNode, is IndentStyle, indent string) error {
-	if text.StringName != "" {
-		tag := tc.bindings.AddString(text.StringName, TextSafe)
-		tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, indentStyle: is, stringTag: tag})
-		return nil
+	if text.Value.Constant() {
+		constant, err := text.Value.Convert(TextSafe)
+		if err != nil {
+			return err
+		}
+		return fprintBlockText(tc, depth, text.Width, indent, is, strings.NewReader(constant))
 	}
 
-	constant, err := text.Constant.Convert(TextSafe)
-	if err != nil {
-		return err
-	}
-	return fprintBlockText(tc, depth, text.Width, indent, is, strings.NewReader(constant))
+	tag := tc.bindings.DeclareString(text.Value.binding, TextSafe)
+	tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, indentStyle: is, stringTag: tag})
+	return nil
 }

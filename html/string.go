@@ -41,8 +41,13 @@ func (l StringTrust) String() string {
 }
 
 type SafeString struct {
-	value string
-	trust StringTrust
+	binding string
+	value   string
+	trust   StringTrust
+}
+
+func (s SafeString) Constant() bool {
+	return s.binding == ""
 }
 
 func (s SafeString) Convert(target StringTrust) (string, error) {
@@ -60,23 +65,30 @@ func (s SafeString) Convert(target StringTrust) (string, error) {
 }
 
 func (s SafeString) String() string {
-	return fmt.Sprintf("%q (%v)", s.value, s.trust)
+	if s.Constant() {
+		return fmt.Sprintf("%q (%v)", s.value, s.trust)
+	}
+	return fmt.Sprintf("string binding %s (default %q %v)", s.binding, s.value, s.trust)
 }
 
 func (s SafeString) Value() string {
 	return s.value
 }
 
+func Bind(name string) SafeString {
+	return SafeString{binding: name}
+}
+
 func TrustedString(s string, trust StringTrust) SafeString {
-	return SafeString{s, trust}
+	return SafeString{value: s, trust: trust}
 }
 
 func FullyTrustedString(s string) SafeString {
-	return SafeString{s, FullyTrusted}
+	return SafeString{value: s, trust: FullyTrusted}
 }
 
 func UntrustedString(s string) SafeString {
-	return SafeString{s, Untrusted}
+	return SafeString{value: s, trust: Untrusted}
 }
 
 func escape(s string, trust StringTrust) (string, error) {

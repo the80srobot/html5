@@ -23,7 +23,7 @@ func MustCompile(node html.Node, opts *html.CompileOptions) *Document {
 }
 
 func ConstantAttribute(name string, constant html.SafeString) *html.Attribute {
-	return &html.Attribute{Name: name, Constant: constant}
+	return &html.Attribute{Name: name, Value: constant}
 }
 
 func HTML(head, body html.Node, opts ...Option) *html.MultiNode {
@@ -35,7 +35,7 @@ func HTML(head, body html.Node, opts ...Option) *html.MultiNode {
 	applyOptions(e, opts...)
 	return &html.MultiNode{
 		Contents: []html.Node{
-			&html.TextNode{Constant: html.FullyTrustedString("<!doctype html>"), Width: 0, IndentStyle: html.Block},
+			&html.TextNode{Value: html.FullyTrustedString("<!doctype html>"), Width: 0, IndentStyle: html.Block},
 			e,
 		},
 	}
@@ -46,7 +46,7 @@ func Head(contents []html.Node, opts ...Option) *html.ElementNode {
 		Name:        "head",
 		IndentStyle: html.Block,
 		Contents: []html.Node{
-			Meta(&html.Attribute{Name: "charset", Constant: html.FullyTrustedString("utf-8")}),
+			Meta(&html.Attribute{Name: "charset", Value: html.FullyTrustedString("utf-8")}),
 		},
 	}
 	e.Contents = append(e.Contents, contents...)
@@ -79,11 +79,5 @@ func P(contents []html.Node, opts ...Option) *html.ElementNode {
 		Contents: contents,
 	}
 	applyOptions(e, opts...)
-	return e
-}
-
-func Text(name string, opts ...Option) *html.TextNode {
-	e := &html.TextNode{StringName: name}
-	applyOptions(e)
 	return e
 }
