@@ -1,22 +1,5 @@
 package html
 
-import "fmt"
-
-type Attribute struct {
-	Name       string
-	Constant   string
-	StringName string
-}
-
-func (a *Attribute) Apply(n Node) error {
-	e, ok := n.(*ElementNode)
-	if !ok {
-		return fmt.Errorf("attributes must be applied to elements, got node %v", n)
-	}
-	e.Attributes = append(e.Attributes, *a)
-	return nil
-}
-
 type ElementNode struct {
 	Name                string
 	Attributes          []Attribute
