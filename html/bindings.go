@@ -72,6 +72,16 @@ func (t Tag) String() string {
 	}
 }
 
+type StringBinding struct {
+	Name  string
+	Trust StringTrust
+	tag   Tag
+}
+
+func (b *StringBinding) Convert(value SafeString) (string, error) {
+	return value.Convert(b.Trust)
+}
+
 // BindingSet is a collection of the dynamic properties of a page (bindings).
 // Each binding is either a string, or another BindingSet describing the dynamic
 // properties of a subsection.
@@ -163,14 +173,12 @@ type ValueArg struct {
 	Tag  Tag
 	Name string
 
-	StringValue string
-	StringTrust StringTrust
-
+	SafeString  SafeString
 	Subsections [][]ValueArg
 }
 
 func (v ValueArg) String() string {
-	return fmt.Sprintf("ValueArg{tag=%v, name=%s, trust=%v, value=%q, subsection=%v}", v.Tag, v.Name, v.StringTrust, v.StringValue, v.Subsections)
+	return fmt.Sprintf("ValueArg{tag=%v, name=%s, string=%q, subsections=%v}", v.Tag, v.Name, v.SafeString, v.Subsections)
 }
 
 // ValueSetStream is a collection of ValueSets used to generate repeated
@@ -232,12 +240,12 @@ func (vs *ValueSet) String() string {
 // in the BindingSet. See ValueArg for more.
 func (vs *ValueSet) Bind(v *ValueArg) error {
 	switch {
-	case v.StringValue != "":
+	case v.SafeString.value != "":
 		tag := v.Tag
 		if tag == ZeroTag {
 			tag = vs.BindingSet.StringTag(v.Name)
 		}
-		return vs.BindString(tag, v.StringTrust, v.StringValue)
+		return vs.BindString(tag, v.SafeString)
 	case len(v.Subsections) != 0:
 		tag := v.Tag
 		if tag == ZeroTag {
@@ -252,14 +260,14 @@ func (vs *ValueSet) Bind(v *ValueArg) error {
 // BindString will set the value of a single string binding, provided its
 // defintion is found in the BindingSet. See StringTrust for a discussion of
 // string safety.
-func (vs *ValueSet) BindString(tag Tag, valueTrust StringTrust, value string) error {
+func (vs *ValueSet) BindString(tag Tag, ss SafeString) error {
 	idx, err := tag.findString(vs.BindingSet.strings)
 	if err != nil {
 		return err
 	}
 
 	b := vs.BindingSet.strings[idx]
-	s, err := b.SafeString(valueTrust, value)
+	s, err := b.Convert(ss)
 	if err != nil {
 		return fmt.Errorf("SafeString for %v: %w", tag, err)
 	}

@@ -40,24 +40,43 @@ func (l StringTrust) String() string {
 	}
 }
 
-type StringBinding struct {
-	Name  string
-	Trust StringTrust
-	tag   Tag
+type SafeString struct {
+	value string
+	trust StringTrust
 }
 
-func (b *StringBinding) SafeString(valueTrust StringTrust, value string) (string, error) {
-	if valueTrust == FullyTrusted || valueTrust == b.Trust {
-		return value, nil
+func (s SafeString) Convert(target StringTrust) (string, error) {
+	if s.trust == FullyTrusted || target == s.trust {
+		return s.value, nil
 	}
 
 	// Only untrusted values can be sanitized. No level of sanitization can make
 	// a value fully trusted for all contexts.
-	if valueTrust != Untrusted || b.Trust == FullyTrusted {
-		return "", fmt.Errorf("%w: cannot convert from %v to %v", ErrStringUntrusted, valueTrust, b.Trust)
+	if s.trust != Untrusted || target == FullyTrusted {
+		return "", fmt.Errorf("%w: cannot convert from %v to %v", ErrStringUntrusted, s, target)
 	}
 
-	return escape(value, b.Trust)
+	return escape(s.value, target)
+}
+
+func (s SafeString) String() string {
+	return fmt.Sprintf("%q (%v)", s.value, s.trust)
+}
+
+func (s SafeString) Value() string {
+	return s.value
+}
+
+func TrustedString(s string, trust StringTrust) SafeString {
+	return SafeString{s, trust}
+}
+
+func FullyTrustedString(s string) SafeString {
+	return SafeString{s, FullyTrusted}
+}
+
+func UntrustedString(s string) SafeString {
+	return SafeString{s, Untrusted}
 }
 
 func escape(s string, trust StringTrust) (string, error) {

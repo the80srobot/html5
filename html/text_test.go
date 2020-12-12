@@ -17,26 +17,26 @@ func TestTextNode(t *testing.T) {
 	}{
 		{
 			comment: "one line static",
-			input:   &TextNode{Constant: "Hello, World!"},
+			input:   &TextNode{Constant: FullyTrustedString("Hello, World!")},
 			opts:    &CompileOptions{},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "two lines static inline",
-			input:   &TextNode{Constant: "Hello, World!", Width: 1},
+			input:   &TextNode{Constant: FullyTrustedString("Hello, World!"), Width: 1},
 			opts:    &CompileOptions{},
 			output:  "Hello,\nWorld!",
 		},
 		{
 			comment: "block one line",
-			input:   &TextNode{Constant: "Hello, World!", IndentStyle: Block},
+			input:   &TextNode{Constant: FullyTrustedString("Hello, World!"), IndentStyle: Block},
 			depth:   1,
 			opts:    &CompileOptions{Indent: "  "},
 			output:  "\n  Hello, World!",
 		},
 		{
 			comment: "block two lines",
-			input:   &TextNode{Constant: "Hello, World!", IndentStyle: Block, Width: 1},
+			input:   &TextNode{Constant: FullyTrustedString("Hello, World!"), IndentStyle: Block, Width: 1},
 			depth:   1,
 			opts:    &CompileOptions{Indent: "  "},
 			output:  "\n  Hello,\n  World!",
@@ -45,14 +45,14 @@ func TestTextNode(t *testing.T) {
 			comment: "binding",
 			input:   &TextNode{StringName: "hello"},
 			opts:    &CompileOptions{},
-			values:  []ValueArg{{Name: "hello", StringValue: "Hello, World!", StringTrust: TextSafe}},
+			values:  []ValueArg{{Name: "hello", SafeString: TrustedString("Hello, World!", TextSafe)}},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "untrusted binding",
 			input:   &TextNode{StringName: "hello"},
 			opts:    &CompileOptions{},
-			values:  []ValueArg{{Name: "hello", StringValue: "<p>Hello, World!</p>", StringTrust: Untrusted}},
+			values:  []ValueArg{{Name: "hello", SafeString: UntrustedString("<p>Hello, World!</p>")}},
 			output:  "&lt;p&gt;Hello, World!&lt;/p&gt;",
 		},
 	} {

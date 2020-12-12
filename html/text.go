@@ -7,7 +7,7 @@ import (
 )
 
 type TextNode struct {
-	Constant    string
+	Constant    SafeString
 	StringName  string
 	Width       int
 	IndentStyle IndentStyle

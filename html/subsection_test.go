@@ -22,9 +22,9 @@ func TestSubsection(t *testing.T) {
 				Prototype: &MultiNode{
 					Contents: []Node{
 						&TextNode{StringName: "user"},
-						&TextNode{Constant: " says "},
+						&TextNode{Constant: FullyTrustedString(" says ")},
 						&TextNode{StringName: "comment"},
-						&TextNode{Constant: "\n"},
+						&TextNode{Constant: FullyTrustedString("\n")},
 					},
 				},
 			},
@@ -33,8 +33,8 @@ func TestSubsection(t *testing.T) {
 				{
 					Name: "user_comments",
 					Subsections: [][]ValueArg{
-						{{Name: "user", StringValue: "John"}, {Name: "comment", StringValue: "Hello!"}},
-						{{Name: "user", StringValue: "Jane"}, {Name: "comment", StringValue: "Howdy!"}},
+						{{Name: "user", SafeString: FullyTrustedString("John")}, {Name: "comment", SafeString: FullyTrustedString("Hello!")}},
+						{{Name: "user", SafeString: FullyTrustedString("Jane")}, {Name: "comment", SafeString: FullyTrustedString("Howdy!")}},
 					},
 				},
 			},
@@ -48,13 +48,13 @@ func TestSubsection(t *testing.T) {
 				Prototype: &MultiNode{
 					Contents: []Node{
 						&TextNode{StringName: "user"},
-						&TextNode{Constant: " says "},
+						&TextNode{Constant: FullyTrustedString(" says ")},
 						&TextNode{StringName: "comment"},
 						&SubsectionNode{
 							Name:      "comment_replies",
 							Prototype: &TextNode{StringName: "reply"},
 						},
-						&TextNode{Constant: "\n"},
+						&TextNode{Constant: FullyTrustedString("\n")},
 					},
 				},
 			},
@@ -64,17 +64,17 @@ func TestSubsection(t *testing.T) {
 					Name: "user_comments",
 					Subsections: [][]ValueArg{
 						{
-							{Name: "user", StringValue: "John"},
-							{Name: "comment", StringValue: "Hello!"},
+							{Name: "user", SafeString: FullyTrustedString("John")},
+							{Name: "comment", SafeString: FullyTrustedString("Hello!")},
 							{
 								Name: "comment_replies",
 								Subsections: [][]ValueArg{
-									{{Name: "reply", StringValue: "Love!"}},
-									{{Name: "reply", StringValue: "Good to see you!"}},
+									{{Name: "reply", SafeString: FullyTrustedString("Love!")}},
+									{{Name: "reply", SafeString: FullyTrustedString("Good to see you!")}},
 								},
 							},
 						},
-						{{Name: "user", StringValue: "Jane"}, {Name: "comment", StringValue: "Howdy!"}},
+						{{Name: "user", SafeString: FullyTrustedString("Jane")}, {Name: "comment", SafeString: FullyTrustedString("Howdy!")}},
 					},
 				},
 			},

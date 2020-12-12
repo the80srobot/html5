@@ -90,17 +90,23 @@ func appendAttribute(tc *templateCompiler, a *Attribute) error {
 		return err
 	}
 
-	if a.StringName != "" {
-		reqTrust, ok := requiredTrustPerAttribute[a.Name]
+	// Different attributes require different levels of trust (e.g. href
+	// contains URLs).
+	reqTrust, ok := requiredTrustPerAttribute[a.Name]
+	if a.Binding != "" {
 		if !ok {
 			reqTrust = FullyTrusted
 		}
-		tc.appendStringBinding(a.StringName, reqTrust)
+		tc.appendStringBinding(a.Binding, reqTrust)
 		_, err := fmt.Fprint(tc, "\"")
 		return err
 	}
 
-	_, err := fmt.Fprintf(tc, "%s\"", a.Constant)
+	constant, err := a.Constant.Convert(reqTrust)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(tc, "%s\"", constant)
 	return err
 }
 
@@ -120,5 +126,9 @@ func appendText(tc *templateCompiler, depth int, text *TextNode, is IndentStyle,
 		return nil
 	}
 
-	return fprintBlockText(tc, depth, text.Width, indent, is, strings.NewReader(text.Constant))
+	constant, err := text.Constant.Convert(TextSafe)
+	if err != nil {
+		return err
+	}
+	return fprintBlockText(tc, depth, text.Width, indent, is, strings.NewReader(constant))
 }

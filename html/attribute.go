@@ -3,9 +3,9 @@ package html
 import "fmt"
 
 type Attribute struct {
-	Name       string
-	Constant   string
-	StringName string
+	Name     string
+	Constant SafeString
+	Binding  string
 }
 
 func (a *Attribute) Apply(n Node) error {
