@@ -1,9 +1,21 @@
 package html5
 
-import "github.com/the80srobot/html5/html"
+import (
+	"io"
+
+	"github.com/the80srobot/html5/html"
+)
 
 type Document struct {
 	*html.Template
+}
+
+func (d *Document) GenerateHTML(w io.Writer, values ...html.ValueArg) error {
+	vs, err := d.Bingings.Bind(values...)
+	if err != nil {
+		return err
+	}
+	return d.Template.GenerateHTML(w, vs)
 }
 
 func Compile(node html.Node, opts *html.CompileOptions) (*Document, error) {
@@ -22,10 +34,6 @@ func MustCompile(node html.Node, opts *html.CompileOptions) *Document {
 	return d
 }
 
-func ConstantAttribute(name string, constant html.SafeString) *html.Attribute {
-	return &html.Attribute{Name: name, Value: constant}
-}
-
 func HTML(head, body html.Node, opts ...Option) *html.MultiNode {
 	e := &html.ElementNode{
 		Name:        "html",
@@ -35,33 +43,15 @@ func HTML(head, body html.Node, opts ...Option) *html.MultiNode {
 	applyOptions(e, opts...)
 	return &html.MultiNode{
 		Contents: []html.Node{
-			&html.TextNode{Value: html.FullyTrustedString("<!doctype html>"), Width: 0, IndentStyle: html.Block},
+			&html.RawNode{HTML: html.FullyTrustedString("<!doctype html>\n")},
 			e,
 		},
 	}
 }
 
-func Head(contents []html.Node, opts ...Option) *html.ElementNode {
-	e := &html.ElementNode{
-		Name:        "head",
-		IndentStyle: html.Block,
-		Contents: []html.Node{
-			Meta(&html.Attribute{Name: "charset", Value: html.FullyTrustedString("utf-8")}),
-		},
-	}
-	e.Contents = append(e.Contents, contents...)
-	applyOptions(e)
-	return e
-}
-
-func Body(contents []html.Node, opts ...Option) *html.ElementNode {
-	e := &html.ElementNode{
-		Name:        "body",
-		IndentStyle: html.Block,
-		Contents:    contents,
-	}
-	applyOptions(e)
-	return e
+func Head(values ...interface{}) *html.ElementNode {
+	values = append(values, Indent(html.Block), Meta(Attribute("charset", html.FullyTrustedString("utf-8"))))
+	return Element("head", values...)
 }
 
 func Meta(opts ...Option) *html.ElementNode {
@@ -69,15 +59,33 @@ func Meta(opts ...Option) *html.ElementNode {
 		Name:        "meta",
 		IndentStyle: html.Block,
 	}
-	applyOptions(e)
+	applyOptions(e, opts...)
 	return e
 }
 
-func P(contents []html.Node, opts ...Option) *html.ElementNode {
-	e := &html.ElementNode{
-		Name:     "p",
-		Contents: contents,
+func Element(name string, values ...interface{}) *html.ElementNode {
+	e := &html.ElementNode{Name: name}
+	for _, value := range values {
+		switch value := value.(type) {
+		case Option:
+			value.Apply(e)
+		case html.Node:
+			e.Contents = append(e.Contents, value)
+		default:
+			panic("invalid argument (must be option or html.Node)")
+		}
 	}
-	applyOptions(e, opts...)
+	return e
+}
+
+func Attribute(name string, value html.SafeString) *html.Attribute {
+	return &html.Attribute{Name: name, Value: value}
+}
+
+func Text(parts ...html.SafeString) *html.MultiNode {
+	e := &html.MultiNode{Contents: make([]html.Node, 0, len(parts))}
+	for _, part := range parts {
+		e.Contents = append(e.Contents, &html.TextNode{Value: part, IndentStyle: html.Inline})
+	}
 	return e
 }

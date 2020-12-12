@@ -27,13 +27,13 @@ func (e *ElementNode) deduplicateAttributes() {
 	e.Attributes = attrs
 }
 
-func (e *ElementNode) compile(db *templateCompiler, depth int, opts *CompileOptions) error {
+func (e *ElementNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
 	e.deduplicateAttributes()
 
 	if e.IndentStyle == Block && !opts.Compact {
-		if err := fprintRawNewline(db, depth, opts.Indent); err != nil {
-			return err
-		}
+		// if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
+		// 	return err
+		// }
 		depth++
 	}
 
@@ -43,25 +43,31 @@ func (e *ElementNode) compile(db *templateCompiler, depth int, opts *CompileOpti
 		openingTag = tagSelfClose
 	}
 
-	if err := appendTag(db, e.Name, openingTag, e.Attributes...); err != nil {
+	if err := appendTag(tc, e.Name, openingTag, e.Attributes...); err != nil {
 		return err
 	}
 	if len(e.Contents) == 0 {
 		return nil
 	}
 
+	if e.IndentStyle == Block && !opts.Compact {
+		if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
+			return err
+		}
+	}
+
 	for _, c := range e.Contents {
-		if err := c.compile(db, depth, opts); err != nil {
+		if err := c.compile(tc, depth, opts); err != nil {
 			return err
 		}
 	}
 
 	if e.IndentStyle == Block && !opts.Compact {
 		depth--
-		if err := fprintRawNewline(db, depth, opts.Indent); err != nil {
+		if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
 			return err
 		}
 	}
 
-	return appendTag(db, e.Name, tagClose)
+	return appendTag(tc, e.Name, tagClose)
 }

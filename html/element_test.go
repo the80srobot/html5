@@ -24,8 +24,12 @@ func TestElementNode(t *testing.T) {
 				Contents: []Node{
 					&TextNode{Value: FullyTrustedString("Hello, World!"), IndentStyle: Block, Width: 1},
 				}},
-			opts:   &Tidy,
-			output: "\n<p id=\"hello\">\n  Hello,\n  World!\n</p>",
+			opts: &Tidy,
+			output: `<p id="hello">
+  
+  Hello,
+  World!
+</p>`, // TODO newline after paragraph looks weird.
 		},
 		{
 			comment: "multiple attributes",
