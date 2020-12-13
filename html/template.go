@@ -1,12 +1,16 @@
 package html
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 )
 
 func GenerateHTML(w io.Writer, n Node, depth int, opts *CompileOptions, vs *ValueSet) error {
+	if opts == nil {
+		return errors.New("CompileOptions can't be nil")
+	}
 	t, err := Compile(n, depth, opts)
 	if err != nil {
 		return err
