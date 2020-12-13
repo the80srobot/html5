@@ -86,3 +86,7 @@ func Text(parts ...html.SafeString) *html.MultiNode {
 	}
 	return e
 }
+
+func Multi(nodes ...html.Node) *html.MultiNode {
+	return &html.MultiNode{Contents: nodes}
+}
