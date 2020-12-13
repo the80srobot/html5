@@ -41,6 +41,19 @@ func LineWidth(width int) Option {
 	return funcOption(f)
 }
 
+func SelfClosing() Option {
+	f := func(n html.Node) error {
+		switch n := n.(type) {
+		case *html.ElementNode:
+			n.SelfClosing = true
+		default:
+			return fmt.Errorf("SelfClosing option cannot be applied to node %v", n)
+		}
+		return nil
+	}
+	return funcOption(f)
+}
+
 func applyOptions(n html.Node, opts ...Option) {
 	for _, opt := range opts {
 		if err := opt.Apply(n); err != nil {
