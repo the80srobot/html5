@@ -1,11 +1,47 @@
 package html
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
+// _ = `
+// <p>Foo</p>
+// <p<span>Foo</span></p>
+// <p>
+//   Foo <b>Bar</b>
+// </p>
+// <h1>Hello</h1>
+// <article>
+//   <h1>Hello</h1>
+//   <p>
+// 	Foo <b>Bar
+// 	<p>
+// 	  foo
+// 	</p>
+// 	</b> baz.
+//   </p>
+// </article>
+// `
+
+// ^ {} <p> \n *
+// ^ {} <i> {} *
+// </p> \n <p>
+// </p> \n <i>
+// </i> {} <i>
+// </i> \n <p>
+// </i> {} </i>
+// </i> \n </p>
+// </p> \n </p>
+// </p> \n </i>
+
+// {} - ANY: {}
+// ANY - BLOCK: newline, indent
+// BLOCK - INLINE: newline, indent
+// INLINE - INLINE: {}
 func TestElementNode(t *testing.T) {
 	for _, tc := range []struct {
 		comment string
@@ -22,14 +58,45 @@ func TestElementNode(t *testing.T) {
 				Name:        "p",
 				Attributes:  []Attribute{{Name: "id", Value: FullyTrustedString("hello")}},
 				Contents: []Node{
-					&TextNode{Value: FullyTrustedString("Hello, World!"), IndentStyle: Block, Width: 1},
+					&TextNode{Value: FullyTrustedString("Hello, World!"), Width: 1},
 				}},
 			opts: &Tidy,
 			output: `<p id="hello">
-  
   Hello,
   World!
 </p>`, // TODO newline after paragraph looks weird.
+		},
+		{
+			comment: "block indent",
+			input: &ElementNode{
+				IndentStyle: Block,
+				Name:        "p",
+				Contents: []Node{
+					&ElementNode{
+						Name:        "span",
+						IndentStyle: Block,
+						Contents: []Node{
+							&TextNode{Value: FullyTrustedString("Span")},
+						},
+					},
+					&ElementNode{
+						Name:        "span",
+						IndentStyle: Block,
+						Contents: []Node{
+							&TextNode{Value: FullyTrustedString("Span")},
+						},
+					},
+				},
+			},
+			opts: &Debug,
+			output: `<p>
+  <span>
+    Span
+  </span>
+  <span>
+    Span
+  </span>
+</p>`,
 		},
 		{
 			comment: "multiple attributes",
@@ -52,12 +119,12 @@ func TestElementNode(t *testing.T) {
 				IndentStyle: Inline,
 				Name:        "a",
 				Attributes: []Attribute{
-					{Name: "href", Value: Bind("href")},
-					{Name: "rel", Value: Bind("rel")},
-					{Name: "target", Value: Bind("target")},
+					{Name: "href", Value: Binding("href")},
+					{Name: "rel", Value: Binding("rel")},
+					{Name: "target", Value: Binding("target")},
 				},
 				Contents: []Node{
-					&TextNode{Value: Bind("hello")},
+					&TextNode{Value: Binding("hello")},
 				},
 			},
 			values: []ValueArg{
@@ -70,8 +137,11 @@ func TestElementNode(t *testing.T) {
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
 		},
 	} {
+		opt := cmpopts.AcyclicTransformer("multiline", func(s string) []string {
+			return strings.Split(s, "\n")
+		})
 		t.Run(tc.comment, func(t *testing.T) {
-			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.depth, tc.opts, tc.values)); diff != "" {
+			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.depth, tc.opts, tc.values), opt); diff != "" {
 				t.Errorf("GenerateHTML(%v, %v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.depth, tc.opts, tc.values, diff)
 			}
 		})

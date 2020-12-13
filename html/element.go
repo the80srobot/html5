@@ -1,10 +1,13 @@
 package html
 
+import "errors"
+
 type ElementNode struct {
 	Name                string
 	Attributes          []Attribute
 	Contents            []Node
 	IndentStyle         IndentStyle
+	SelfClosing         bool
 	XMLStyleSelfClosing bool
 }
 
@@ -30,28 +33,36 @@ func (e *ElementNode) deduplicateAttributes() {
 func (e *ElementNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
 	e.deduplicateAttributes()
 
-	if e.IndentStyle == Block && !opts.Compact {
-		// if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
-		// 	return err
-		// }
-		depth++
+	isBlock := e.IndentStyle == Block && !opts.Compact
+
+	// Block elements always start on a new line.
+	if isBlock && !tc.freshLine() {
+		if err := tc.appendNewLine(depth, opts.Indent); err != nil {
+			return err
+		}
 	}
 
-	// Handle the xHTML style (produce <br/> instead of <br>).
+	// Handle the xHTML style (produce <br /> instead of <br>).
 	openingTag := tagOpen
-	if len(e.Contents) == 0 && e.XMLStyleSelfClosing {
+	if e.XMLStyleSelfClosing {
 		openingTag = tagSelfClose
 	}
 
 	if err := appendTag(tc, e.Name, openingTag, e.Attributes...); err != nil {
 		return err
 	}
-	if len(e.Contents) == 0 {
+
+	if e.SelfClosing || e.XMLStyleSelfClosing {
+		if len(e.Contents) != 0 {
+			return errors.New("self-closing element cannot have contents")
+		}
 		return nil
 	}
 
-	if e.IndentStyle == Block && !opts.Compact {
-		if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
+	if isBlock {
+		depth++
+		// Block element contents are indented by an additional level.
+		if err := tc.appendNewLine(depth, opts.Indent); err != nil {
 			return err
 		}
 	}
@@ -62,12 +73,16 @@ func (e *ElementNode) compile(tc *templateCompiler, depth int, opts *CompileOpti
 		}
 	}
 
-	if e.IndentStyle == Block && !opts.Compact {
+	if isBlock {
 		depth--
-		if err := fprintRawNewline(tc, depth, opts.Indent); err != nil {
+		if err := tc.appendNewLine(depth, opts.Indent); err != nil {
 			return err
 		}
 	}
 
-	return appendTag(tc, e.Name, tagClose)
+	if err := appendTag(tc, e.Name, tagClose); err != nil {
+		return err
+	}
+
+	return nil
 }

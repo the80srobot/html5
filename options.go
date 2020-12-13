@@ -21,8 +21,6 @@ func Indent(is html.IndentStyle) Option {
 		switch n := n.(type) {
 		case *html.ElementNode:
 			n.IndentStyle = is
-		case *html.TextNode:
-			n.IndentStyle = is
 		default:
 			return fmt.Errorf("Indent option cannot be applied to node %v", n)
 		}

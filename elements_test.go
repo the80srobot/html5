@@ -22,16 +22,17 @@ func TestElements(t *testing.T) {
 			input: HTML(
 				Head(),
 				Element("body", Indent(html.Block),
-					Element("h1", Text(html.FullyTrustedString("Hello, "), html.Bind("user_name"))))),
+					Element("h1", Text(html.FullyTrustedString("Hello, "), html.Binding("user_name"))))),
 			values: []html.ValueArg{{Name: "user_name", SafeString: html.UntrustedString("Bob")}},
 			output: `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
-  </head><body>
+  </head>
+  <body>
     <h1>Hello, Bob</h1>
   </body>
-</html>`, // TODO: newline after head would be nicer.
+</html>`,
 		},
 	} {
 		t.Run(tc.comment, func(t *testing.T) {

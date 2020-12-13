@@ -21,9 +21,9 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: Bind("user")},
+						&TextNode{Value: Binding("user")},
 						&TextNode{Value: FullyTrustedString(" says ")},
-						&TextNode{Value: Bind("comment")},
+						&TextNode{Value: Binding("comment")},
 						&TextNode{Value: FullyTrustedString("\n")},
 					},
 				},
@@ -47,12 +47,12 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: Bind("user")},
+						&TextNode{Value: Binding("user")},
 						&TextNode{Value: FullyTrustedString(" says ")},
-						&TextNode{Value: Bind("comment")},
+						&TextNode{Value: Binding("comment")},
 						&SubsectionNode{
 							Name:      "comment_replies",
-							Prototype: &TextNode{Value: Bind("reply")},
+							Prototype: &TextNode{Value: Binding("reply")},
 						},
 						&TextNode{Value: FullyTrustedString("\n")},
 					},

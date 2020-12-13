@@ -19,13 +19,7 @@ func fprintRawNewline(w io.Writer, depth int, indent string) error {
 	return nil
 }
 
-func fprintBlockText(w io.Writer, depth, width int, indent string, is IndentStyle, text io.Reader) error {
-	if is == Block {
-		if err := fprintRawNewline(w, depth, indent); err != nil {
-			return err
-		}
-	}
-
+func fprintBlockText(w io.Writer, depth, width int, indent string, text io.Reader) error {
 	if width <= 0 {
 		_, err := io.Copy(w, text)
 		return err

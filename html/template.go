@@ -15,7 +15,7 @@ func GenerateHTML(w io.Writer, n Node, depth int, opts *CompileOptions, vs *Valu
 }
 
 type Node interface {
-	compile(ds *templateCompiler, depth int, opts *CompileOptions) error
+	compile(tc *templateCompiler, depth int, opts *CompileOptions) error
 }
 
 type Template struct {

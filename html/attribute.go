@@ -17,12 +17,7 @@ func (a *Attribute) Apply(n Node) error {
 }
 
 // Lists the required trust level for the content of known HTML attributes. If
-// an attribute is not on this list, the FullyTrusted level must be required
-// (this includes data attributes).
-//
-// This is derived from the HTML5 spec on
-// https://www.w3.org/TR/html5/Overview.html#attributes-1 and from
-// https://golang.org/src/html/template/attr.go.
+// an attribute is not on this list, then assume FullyTrusted is required.
 var requiredTrustPerAttribute = map[string]StringTrust{
 	"accept":          AttributeSafe,
 	"accept-charset":  FullyTrusted,

@@ -58,6 +58,7 @@ func Meta(opts ...Option) *html.ElementNode {
 	e := &html.ElementNode{
 		Name:        "meta",
 		IndentStyle: html.Block,
+		SelfClosing: true,
 	}
 	applyOptions(e, opts...)
 	return e
@@ -85,7 +86,7 @@ func Attribute(name string, value html.SafeString) *html.Attribute {
 func Text(parts ...html.SafeString) *html.MultiNode {
 	e := &html.MultiNode{Contents: make([]html.Node, 0, len(parts))}
 	for _, part := range parts {
-		e.Contents = append(e.Contents, &html.TextNode{Value: part, IndentStyle: html.Inline})
+		e.Contents = append(e.Contents, &html.TextNode{Value: part})
 	}
 	return e
 }

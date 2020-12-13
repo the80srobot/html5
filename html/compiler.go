@@ -13,6 +13,26 @@ type templateCompiler struct {
 	bindings       BindingSet
 }
 
+func (tc *templateCompiler) freshLine() bool {
+	if tc.pending == nil {
+		return len(tc.chunks) == 0
+	}
+
+	p := tc.pending.Bytes()
+	for i := len(p) - 1; i >= 0; i-- {
+		switch p[i] {
+		case '\n':
+			return true
+		case ' ', '\t':
+			continue
+		default:
+			return false
+		}
+	}
+
+	return false
+}
+
 func (tc *templateCompiler) flush() {
 	if tc.pending == nil {
 		return
@@ -32,24 +52,35 @@ func (tc *templateCompiler) appendStringBinding(name string, trust StringTrust) 
 }
 
 func (tc *templateCompiler) Write(p []byte) (int, error) {
+	tc.ensureBuffer()
+	return tc.pending.Write(p)
+}
+
+func (tc *templateCompiler) WriteString(s string) (int, error) {
+	tc.ensureBuffer()
+	return tc.pending.WriteString(s)
+}
+
+func (tc *templateCompiler) ensureBuffer() {
 	if tc.separateChunks {
 		tc.flush()
 	}
 	if tc.pending == nil {
 		tc.pending = &bytes.Buffer{}
 	}
-	return tc.pending.Write(p)
 }
 
-func (tc *templateCompiler) WriteString(s string) (int, error) {
-	if tc.separateChunks {
-		tc.flush()
+func (tc *templateCompiler) appendNewLine(depth int, indent string) error {
+	tc.ensureBuffer()
+	if _, err := tc.pending.Write([]byte{'\n'}); err != nil {
+		return err
 	}
-	if tc.pending == nil {
-		tc.pending = bytes.NewBufferString(s)
-		return len(s), nil
+	for i := 0; i < depth; i++ {
+		if _, err := tc.pending.WriteString(indent); err != nil {
+			return err
+		}
 	}
-	return tc.pending.WriteString(s)
+	return nil
 }
 
 type tagStyle int16
@@ -111,25 +142,16 @@ func appendAttribute(tc *templateCompiler, a *Attribute) error {
 	return err
 }
 
-func appendIndent(tc *templateCompiler, depth int, indent string) error {
-	for i := 0; i < depth; i++ {
-		if _, err := tc.WriteString(indent); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func appendText(tc *templateCompiler, depth int, text *TextNode, is IndentStyle, indent string) error {
+func appendText(tc *templateCompiler, depth int, text *TextNode, indent string) error {
 	if text.Value.Constant() {
 		constant, err := text.Value.Convert(TextSafe)
 		if err != nil {
 			return err
 		}
-		return fprintBlockText(tc, depth, text.Width, indent, is, strings.NewReader(constant))
+		return fprintBlockText(tc, depth, text.Width, indent, strings.NewReader(constant))
 	}
 
 	tag := tc.bindings.DeclareString(text.Value.binding, TextSafe)
-	tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, indentStyle: is, stringTag: tag})
+	tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, stringTag: tag})
 	return nil
 }
