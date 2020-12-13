@@ -30,7 +30,7 @@ func TestElementNode(t *testing.T) {
 			output: `<p id="hello">
   Hello,
   World!
-</p>`, // TODO newline after paragraph looks weird.
+</p>`,
 		},
 		{
 			comment: "block indent",
@@ -54,7 +54,7 @@ func TestElementNode(t *testing.T) {
 					},
 				},
 			},
-			opts: &Debug,
+			opts: &Tidy,
 			output: `<p>
   <span>
     Span
