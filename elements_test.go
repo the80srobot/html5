@@ -20,17 +20,30 @@ func TestElements(t *testing.T) {
 			comment: "html page",
 			opts:    &html.Tidy,
 			input: HTML(
-				Head(),
+				Attribute("lang", html.FullyTrustedString("en")),
+				Head(
+					Meta(Attribute("author", html.Binding("author"))),
+					Meta(Attribute("description", html.Binding("description")))),
 				Element("body", Indent(html.Block),
-					Element("h1", Text(html.FullyTrustedString("Hello, "), html.Binding("user_name"))))),
-			values: []html.ValueArg{{Name: "user_name", SafeString: html.UntrustedString("Bob")}},
+					Element("h1", Text(html.FullyTrustedString("Hello, "), html.Binding("user_name"))),
+					Element("p", Indent(html.Block), Text(html.FullyTrustedString("Welcome to our website."))))),
+			values: []html.ValueArg{
+				{Name: "author", SafeString: html.FullyTrustedString("Nakatomi Corporation")},
+				{Name: "description", SafeString: html.FullyTrustedString("Our glorious website")},
+				{Name: "user_name", SafeString: html.UntrustedString("Bob")},
+			},
 			output: `<!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta author="Nakatomi Corporation">
+    <meta description="Our glorious website">
     <meta charset="utf-8">
   </head>
   <body>
     <h1>Hello, Bob</h1>
+    <p>
+      Welcome to our website.
+    </p>
   </body>
 </html>`,
 		},

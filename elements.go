@@ -34,13 +34,9 @@ func MustCompile(node html.Node, opts *html.CompileOptions) *Document {
 	return d
 }
 
-func HTML(head, body html.Node, opts ...Option) *html.MultiNode {
-	e := &html.ElementNode{
-		Name:        "html",
-		Contents:    []html.Node{head, body},
-		IndentStyle: html.Block,
-	}
-	applyOptions(e, opts...)
+func HTML(values ...interface{}) *html.MultiNode {
+	values = append(values, Indent(html.Block))
+	e := Element("html", values...)
 	return &html.MultiNode{
 		Contents: []html.Node{
 			&html.RawNode{HTML: html.FullyTrustedString("<!doctype html>\n")},
