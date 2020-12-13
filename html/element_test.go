@@ -8,40 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-// _ = `
-// <p>Foo</p>
-// <p<span>Foo</span></p>
-// <p>
-//   Foo <b>Bar</b>
-// </p>
-// <h1>Hello</h1>
-// <article>
-//   <h1>Hello</h1>
-//   <p>
-// 	Foo <b>Bar
-// 	<p>
-// 	  foo
-// 	</p>
-// 	</b> baz.
-//   </p>
-// </article>
-// `
-
-// ^ {} <p> \n *
-// ^ {} <i> {} *
-// </p> \n <p>
-// </p> \n <i>
-// </i> {} <i>
-// </i> \n <p>
-// </i> {} </i>
-// </i> \n </p>
-// </p> \n </p>
-// </p> \n </i>
-
-// {} - ANY: {}
-// ANY - BLOCK: newline, indent
-// BLOCK - INLINE: newline, indent
-// INLINE - INLINE: {}
 func TestElementNode(t *testing.T) {
 	for _, tc := range []struct {
 		comment string
