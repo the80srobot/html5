@@ -2,6 +2,7 @@ package html
 
 import "errors"
 
+// ElementNode represents an HTML element, like <p>.
 type ElementNode struct {
 	Name                string
 	Attributes          []Attribute

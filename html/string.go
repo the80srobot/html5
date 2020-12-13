@@ -145,12 +145,11 @@ func escapeText(s string) (string, error) {
 }
 
 func escapeURL(s string) (string, error) {
+	// TODO - this is the only place we depend on an outside package. It also
+	// doesn't really escape the URL, although it does validate it.
 	return safehtml.URLSanitized(s).String(), nil
 }
 
 func escapeAttribute(s string) (string, error) {
-	// TODO - I am sure this is somehow deficient. Possibly, there is no
-	// universal standard to which attributes should be escaped ,and we should
-	// always require a fully trusted string?
 	return "", errors.New("attributes must currently be FullyTrusted")
 }

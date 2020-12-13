@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	safetemplate "github.com/google/safehtml/template"
+	// safetemplate "github.com/google/safehtml/template"
 	"github.com/the80srobot/html5/html"
 )
 
@@ -67,16 +67,16 @@ func BenchmarkSmallPage(b *testing.B) {
 	}
 }
 
-type smallSafeTemplateData struct {
-	Author      safetemplate.TrustedSource
-	Description safetemplate.TrustedSource
-	User        string
-}
-
 // The safehtml benchmark is disabled, because it seems like the safehtml
 // package is not capable of generating the same HTML as html/template and
 // html5. There seems to be no way to force safehtml to interpolate strings in
 // attributes, no matter how well-attested their origin is.
+
+// type smallSafeTemplateData struct {
+// 	Author      safetemplate.TrustedSource
+// 	Description safetemplate.TrustedSource
+// 	User        string
+// }
 
 // func BenchmarkSmallSafeHTMLTemplate(b *testing.B) {
 // 	tmpl := safetemplate.Must(safetemplate.New("test").Parse(smallTemplate))

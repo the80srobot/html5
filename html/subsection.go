@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// SubsectionNode represents a self-contained part of the page, which can be
+// repeated in the output, each time with different bindings. (For example,
+// comments under an article might each be a subsection.)
+//
+// Subsections can contain other subsections.
 type SubsectionNode struct {
 	Prototype Node
 	Name      string

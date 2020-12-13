@@ -1,5 +1,6 @@
 package html
 
+// RawNode inserts a fully trusted string directly into the page.
 type RawNode struct {
 	HTML SafeString
 }

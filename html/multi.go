@@ -1,5 +1,6 @@
 package html
 
+// MultiNode concatenates several other nodes.
 type MultiNode struct {
 	Contents []Node
 }
