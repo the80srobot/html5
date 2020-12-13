@@ -1,7 +1,6 @@
 package html
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -29,11 +28,15 @@ func subsectionTag(i int) Tag {
 	return Tag{-i - 1}
 }
 
-func (t Tag) string() int {
+func (t Tag) isString() bool {
+	return t.v >= 1
+}
+
+func (t Tag) stringIdx() int {
 	return t.v - 1
 }
 
-func (t Tag) subsection() int {
+func (t Tag) subsectionIdx() int {
 	return t.v + 1
 }
 
@@ -239,22 +242,21 @@ func (vs *ValueSet) String() string {
 // Bind will set the value of a single binding, provided its definition is found
 // in the BindingSet. See ValueArg for more.
 func (vs *ValueSet) Bind(v *ValueArg) error {
-	switch {
-	case v.SafeString.value != "":
-		tag := v.Tag
-		if tag == ZeroTag {
-			tag = vs.BindingSet.StringTag(v.Name)
+	tag := v.Tag
+	if tag == ZeroTag {
+		if st := vs.BindingSet.StringTag(v.Name); st != ZeroTag {
+			tag = st
+		} else if bt := vs.BindingSet.SubsectionTag(v.Name); bt != ZeroTag {
+			tag = bt
+		} else {
+			return fmt.Errorf("no such binding %q", v.Name)
 		}
-		return vs.BindString(tag, v.SafeString)
-	case len(v.Subsections) != 0:
-		tag := v.Tag
-		if tag == ZeroTag {
-			tag = vs.BindingSet.SubsectionTag(v.Name)
-		}
-		return vs.BindSubsections(tag, v.Subsections)
-	default:
-		return errors.New("empty value")
 	}
+
+	if tag.isString() {
+		return vs.BindString(tag, v.SafeString)
+	}
+	return vs.BindSubsections(tag, v.Subsections)
 }
 
 // BindString will set the value of a single string binding, provided its
