@@ -1,10 +1,13 @@
 package html
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 )
+
+var ErrNoSuchBinding = errors.New("no such binding")
 
 // Tag identifies a binding (string or subsection). BindingSet and ValueSet use
 // Tags to lookup bindings and values without having to hash their names.
@@ -165,6 +168,18 @@ func (bs *BindingSet) Bind(values ...ValueArg) (*ValueSet, error) {
 	return &vs, nil
 }
 
+// BindIgnoreErrors is just like Bind, but skips over any errors. It can be
+// helpful when providing values for bindings that are not found in the set,
+// which is not recommended for performance reasons, but sometimes hard to avoid
+// without substantial refactoring.
+func (bs *BindingSet) BindIgnoreErrors(values ...ValueArg) *ValueSet {
+	vs := ValueSet{BindingSet: bs}
+	for _, v := range values {
+		vs.Bind(&v)
+	}
+	return &vs
+}
+
 // ValueArg specifies value of a binding. It is a convenient way of supplying
 // arguments to BindingSet.Bind, but has no other use.
 type ValueArg struct {
@@ -249,7 +264,7 @@ func (vs *ValueSet) Bind(v *ValueArg) error {
 		} else if bt := vs.BindingSet.SubsectionTag(v.Name); bt != ZeroTag {
 			tag = bt
 		} else {
-			return fmt.Errorf("no such binding %q", v.Name)
+			return fmt.Errorf("%w %q", ErrNoSuchBinding, v.Name)
 		}
 	}
 
