@@ -63,6 +63,12 @@ type SafeString struct {
 	trust   StringTrust
 }
 
+// DebugValue returns the string's value as is. Only for logging and debugging.
+// Us Convert for proper access.
+func (s SafeString) DebugValue() string {
+	return s.value
+}
+
 // Constant returns whether this string has a constant value. (The other option
 // is that the string is a binding, whose value will be supplied later.)
 func (s SafeString) Constant() bool {
