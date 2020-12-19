@@ -63,6 +63,10 @@ type SafeString struct {
 	trust   StringTrust
 }
 
+// EmptyString is a sentinel zero value - SafeStrings with no content will be
+// equal to it.
+var EmptyString = SafeString{}
+
 // DebugValue returns the string's value as is. Only for logging and debugging.
 // Us Convert for proper access.
 func (s SafeString) DebugValue() string {
