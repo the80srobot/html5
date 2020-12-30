@@ -271,6 +271,16 @@ func (vs *ValueSet) findTag(v *ValueArg) (Tag, error) {
 	return tag, nil
 }
 
+func (vs *ValueSet) GetStringByName(name string) string {
+	return vs.GetString(vs.BindingSet.StringTag(name))
+}
+
+func (vs *ValueSet) GetString(tag Tag) string {
+	var sb strings.Builder
+	vs.writeStringTo(&sb, tag)
+	return sb.String()
+}
+
 // Bind will set the value of a single binding, provided its definition is found
 // in the BindingSet. See ValueArg for more.
 func (vs *ValueSet) Bind(v *ValueArg) error {
