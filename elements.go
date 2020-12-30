@@ -10,6 +10,9 @@ type Document struct {
 	*html.Template
 }
 
+// An Input is an Option or an html.Node.
+type Input interface{}
+
 func (d *Document) GenerateHTML(w io.Writer, values ...html.ValueArg) error {
 	vs, err := d.Bingings.Bind(values...)
 	if err != nil {
@@ -34,7 +37,7 @@ func MustCompile(node html.Node, opts *html.CompileOptions) *Document {
 	return d
 }
 
-func HTML(values ...interface{}) *html.MultiNode {
+func HTML(values ...Input) *html.MultiNode {
 	values = append(values, Indent(html.Block))
 	e := Element("html", values...)
 	return &html.MultiNode{
@@ -45,7 +48,7 @@ func HTML(values ...interface{}) *html.MultiNode {
 	}
 }
 
-func Head(values ...interface{}) *html.ElementNode {
+func Head(values ...Input) *html.ElementNode {
 	values = append(values, Indent(html.Block), Meta(Attribute("charset", html.FullyTrustedString("utf-8"))))
 	return Element("head", values...)
 }
@@ -60,7 +63,7 @@ func Meta(opts ...Option) *html.ElementNode {
 	return e
 }
 
-func Element(name string, values ...interface{}) *html.ElementNode {
+func Element(name string, values ...Input) *html.ElementNode {
 	e := &html.ElementNode{Name: name}
 	for _, value := range values {
 		switch value := value.(type) {
