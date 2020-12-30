@@ -1,5 +1,7 @@
 # Go package for generating HTML5
 
+IMPORTANT: THIS IS STILL EXPERIMENTAL AND SUBJECT TO CHANGE
+
 This package provides a template-free, declarative mechanism for generating
 HTML5. It has some advantages over `html/template`:
 
