@@ -168,16 +168,19 @@ func (bs *BindingSet) Bind(values ...ValueArg) (*ValueSet, error) {
 	return &vs, nil
 }
 
-// BindIgnoreErrors is just like Bind, but skips over any errors. It can be
-// helpful when providing values for bindings that are not found in the set,
-// which is not recommended for performance reasons, but sometimes hard to avoid
-// without substantial refactoring.
-func (bs *BindingSet) BindIgnoreErrors(values ...ValueArg) *ValueSet {
+// BindAutoDeclare is just like Bind, but tries to fix any missing binding
+// errors by declaring them at last minute. It can be helpful when providing
+// values for bindings that are not found in the set, which is not recommended
+// for performance reasons, but sometimes hard to avoid without substantial
+// refactoring.
+func (bs *BindingSet) BindAutoDeclare(values ...ValueArg) (*ValueSet, error) {
 	vs := ValueSet{BindingSet: bs}
 	for _, v := range values {
-		vs.Bind(&v)
+		if err := vs.BindOrDeclareString(&v); err != nil {
+			return nil, err
+		}
 	}
-	return &vs
+	return &vs, nil
 }
 
 // ValueArg specifies value of a binding. It is a convenient way of supplying
@@ -254,9 +257,7 @@ func (vs *ValueSet) String() string {
 	return sb.String()
 }
 
-// Bind will set the value of a single binding, provided its definition is found
-// in the BindingSet. See ValueArg for more.
-func (vs *ValueSet) Bind(v *ValueArg) error {
+func (vs *ValueSet) findTag(v *ValueArg) (Tag, error) {
 	tag := v.Tag
 	if tag == ZeroTag {
 		if st := vs.BindingSet.StringTag(v.Name); st != ZeroTag {
@@ -264,8 +265,35 @@ func (vs *ValueSet) Bind(v *ValueArg) error {
 		} else if bt := vs.BindingSet.SubsectionTag(v.Name); bt != ZeroTag {
 			tag = bt
 		} else {
-			return fmt.Errorf("%w %q", ErrNoSuchBinding, v.Name)
+			return ZeroTag, fmt.Errorf("%w %q", ErrNoSuchBinding, v.Name)
 		}
+	}
+	return tag, nil
+}
+
+// Bind will set the value of a single binding, provided its definition is found
+// in the BindingSet. See ValueArg for more.
+func (vs *ValueSet) Bind(v *ValueArg) error {
+	tag, err := vs.findTag(v)
+	if err != nil {
+		return err
+	}
+
+	if tag.isString() {
+		return vs.BindString(tag, v.SafeString)
+	}
+	return vs.BindSubsections(tag, v.Subsections)
+}
+
+// BindOrDeclareString is just like Bind, but will automatically declare any
+// missing string bindings, so it will never fail due to ErrNoSuchBinding.
+func (vs *ValueSet) BindOrDeclareString(v *ValueArg) error {
+	tag, err := vs.findTag(v)
+	if errors.Is(err, ErrNoSuchBinding) {
+		tag = vs.BindingSet.DeclareString(v.Name, FullyTrusted)
+		err = nil
+	} else if err != nil {
+		return err
 	}
 
 	if tag.isString() {

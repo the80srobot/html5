@@ -19,7 +19,7 @@ type Input interface{}
 type String interface{}
 
 func (d *Document) GenerateHTML(w io.Writer, values ...html.ValueArg) error {
-	vs, err := d.Bingings.Bind(values...)
+	vs, err := d.Bingings.BindAutoDeclare(values...)
 	if err != nil {
 		return err
 	}
