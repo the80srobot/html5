@@ -22,7 +22,7 @@ func (ns *SubsectionNode) compile(tc *templateCompiler, depth int, opts *Compile
 	if err != nil {
 		return err
 	}
-	tag := tc.bindings.DeclareSubsection(ns.Name, &t.Bingings)
+	tag := tc.bindings.DeclareSubsection(ns.Name, t.Bingings)
 	tc.appendChunk(subsectionChunk{template: *t, binding: tag})
 	return nil
 }

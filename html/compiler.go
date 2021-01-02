@@ -10,7 +10,13 @@ type templateCompiler struct {
 	pending        *bytes.Buffer
 	chunks         []chunk
 	separateChunks bool
-	bindings       BindingSet
+	bindings       *BindingSet
+}
+
+func newTemplateCompiler() *templateCompiler {
+	return &templateCompiler{
+		bindings: &BindingSet{},
+	}
 }
 
 func (tc *templateCompiler) freshLine() bool {

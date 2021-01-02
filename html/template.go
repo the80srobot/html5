@@ -24,7 +24,7 @@ type Node interface {
 
 type Template struct {
 	chunks   []chunk
-	Bingings BindingSet
+	Bingings *BindingSet
 }
 
 func (t *Template) GenerateHTML(w io.Writer, vs *ValueSet) error {
@@ -50,9 +50,9 @@ func (t *Template) String() string {
 }
 
 func Compile(n Node, depth int, opts *CompileOptions) (*Template, error) {
-	var tc templateCompiler
+	tc := newTemplateCompiler()
 	tc.separateChunks = opts.SeparateStaticChunks
-	if err := n.compile(&tc, depth, opts); err != nil {
+	if err := n.compile(tc, depth, opts); err != nil {
 		return nil, err
 	}
 	tc.flush()

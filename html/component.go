@@ -67,20 +67,3 @@ func (sc switchChunk) build(w io.Writer, vs *ValueSet) error {
 	}
 	return nil
 }
-
-// func (sc componentChunk) String() string {
-// 	var sb strings.Builder
-// 	fmt.Fprint(&sb, "switch {\n")
-
-// 	scanner := bufio.NewScanner(strings.NewReader(sc.template.String()))
-// 	scanner.Split(bufio.ScanLines)
-// 	for scanner.Scan() {
-// 		line := scanner.Text()
-// 		sb.WriteByte('\t')
-// 		sb.WriteString(line)
-// 		sb.WriteByte('\n')
-// 	}
-
-// 	sb.WriteString("\n}")
-// 	return sb.String()
-// }
