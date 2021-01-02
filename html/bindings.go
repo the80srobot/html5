@@ -106,7 +106,7 @@ type BindingSet struct {
 
 func (bs *BindingSet) String() string {
 	var sb strings.Builder
-	sb.WriteString("BindingSet{\n")
+	fmt.Fprintf(&sb, "BindingSet@%p{\n", bs)
 	for name, tag := range bs.stringNames {
 		fmt.Fprintf(&sb, "\t%s (%v)\n", name, tag)
 	}
