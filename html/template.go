@@ -1,22 +1,10 @@
 package html
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
 )
-
-func GenerateHTML(w io.Writer, n Node, depth int, opts *CompileOptions, vs *ValueSet) error {
-	if opts == nil {
-		return errors.New("CompileOptions can't be nil")
-	}
-	t, err := Compile(n, depth, opts)
-	if err != nil {
-		return err
-	}
-	return t.GenerateHTML(w, vs)
-}
 
 type Node interface {
 	compile(tc *templateCompiler, depth int, opts *CompileOptions) error
@@ -49,7 +37,7 @@ func (t *Template) String() string {
 	return sb.String()
 }
 
-func Compile(n Node, depth int, opts *CompileOptions) (*Template, error) {
+func Compile(n Node, depth int, bs *BindingSet, opts *CompileOptions) (*Template, error) {
 	tc := newTemplateCompiler()
 	tc.separateChunks = opts.SeparateStaticChunks
 	if err := n.compile(tc, depth, opts); err != nil {

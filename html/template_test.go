@@ -8,7 +8,8 @@ import (
 func mustGenerateHTML(t testing.TB, n Node, depth int, opts *CompileOptions, values []ValueArg) string {
 	t.Helper()
 	var sb strings.Builder
-	tmpl, err := Compile(n, depth, opts)
+	var bs BindingSet
+	tmpl, err := Compile(n, depth, &bs, opts)
 	if err != nil {
 		t.Fatalf("Compile: %v", err)
 	}

@@ -8,7 +8,8 @@ import (
 )
 
 type Document struct {
-	*html.Template
+	Template *html.Template
+	Bindings *html.BindingSet
 }
 
 // An Input is an Option or an html.Node.
@@ -19,23 +20,23 @@ type Input interface{}
 type String interface{}
 
 func (d *Document) GenerateHTML(w io.Writer, values ...html.ValueArg) error {
-	vs, err := d.Bingings.BindAutoDeclare(values...)
+	vs, err := d.Bindings.BindAutoDeclare(values...)
 	if err != nil {
 		return err
 	}
 	return d.Template.GenerateHTML(w, vs)
 }
 
-func Compile(node html.Node, opts *html.CompileOptions) (*Document, error) {
-	t, err := html.Compile(node, 0, opts)
+func Compile(node html.Node, bs *html.BindingSet, opts *html.CompileOptions) (*Document, error) {
+	t, err := html.Compile(node, 0, bs, opts)
 	if err != nil {
 		return nil, err
 	}
-	return &Document{t}, nil
+	return &Document{t, bs}, nil
 }
 
-func MustCompile(node html.Node, opts *html.CompileOptions) *Document {
-	d, err := Compile(node, opts)
+func MustCompile(node html.Node, bs *html.BindingSet, opts *html.CompileOptions) *Document {
+	d, err := Compile(node, bs, opts)
 	if err != nil {
 		panic(err)
 	}

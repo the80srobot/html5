@@ -30,7 +30,7 @@ func TestElements(t *testing.T) {
 			values: []html.ValueArg{
 				{Name: "author", SafeString: html.FullyTrustedString("Nakatomi Corporation")},
 				{Name: "description", SafeString: html.FullyTrustedString("Our glorious website")},
-				{Name: "user_name", SafeString: html.UntrustedString("Bob")},
+				{Name: "user_name", SafeString: html.FullyTrustedString("Bob")},
 			},
 			output: `<!doctype html>
 <html lang="en">
@@ -49,7 +49,8 @@ func TestElements(t *testing.T) {
 		},
 	} {
 		t.Run(tc.comment, func(t *testing.T) {
-			doc, err := Compile(tc.input, tc.opts)
+			var bs html.BindingSet
+			doc, err := Compile(tc.input, &bs, tc.opts)
 			if err != nil {
 				t.Fatalf("Compile(%v, %v): %v", tc.input, tc.opts, err)
 			}

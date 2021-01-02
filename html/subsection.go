@@ -18,7 +18,7 @@ type SubsectionNode struct {
 }
 
 func (ns *SubsectionNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
-	t, err := Compile(ns.Prototype, depth, opts)
+	t, err := Compile(ns.Prototype, depth, tc.bindings, opts)
 	if err != nil {
 		return err
 	}

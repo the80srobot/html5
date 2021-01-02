@@ -49,7 +49,8 @@ func BenchmarkSmallPage(b *testing.B) {
 		Element("body", Indent(html.Block),
 			Element("h1", Text(html.FullyTrustedString("Hello, "), html.Binding("user_name"))),
 			Element("p", Indent(html.Block), Text(html.FullyTrustedString("Welcome to our website.")))))
-	doc, err := Compile(page, &html.Compact)
+	var bs html.BindingSet
+	doc, err := Compile(page, &bs, &html.Compact)
 
 	if err != nil {
 		b.Fatal(err)

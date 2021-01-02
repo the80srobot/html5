@@ -28,7 +28,7 @@ func (sn *SwitchNode) compile(tc *templateCompiler, depth int, opts *CompileOpti
 		if c.Output == nil {
 			continue
 		}
-		t, err := Compile(c.Output, depth, opts)
+		t, err := Compile(c.Output, depth, tc.bindings, opts)
 		if err != nil {
 			return fmt.Errorf("compiling case %d/%d: %w", i+1, len(sn.Cases), err)
 		}
@@ -36,7 +36,7 @@ func (sn *SwitchNode) compile(tc *templateCompiler, depth int, opts *CompileOpti
 	}
 
 	if sn.Default != nil {
-		t, err := Compile(sn.Default, depth, opts)
+		t, err := Compile(sn.Default, depth, tc.bindings, opts)
 		if err != nil {
 			return fmt.Errorf("compiling default case: %w", err)
 		}
