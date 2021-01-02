@@ -104,6 +104,19 @@ type BindingSet struct {
 	subsectionNames map[string]Tag
 }
 
+func (bs *BindingSet) String() string {
+	var sb strings.Builder
+	sb.WriteString("BindingSet{\n")
+	for name, tag := range bs.stringNames {
+		fmt.Fprintf(&sb, "\t%s (%v)\n", name, tag)
+	}
+	for name, tag := range bs.subsectionNames {
+		fmt.Fprintf(&sb, "\t%s (%v)\n", name, tag)
+	}
+	sb.WriteString("}")
+	return sb.String()
+}
+
 func (bs *BindingSet) lazyInit() {
 	if len(bs.strings) == 0 && len(bs.subsections) == 0 {
 		bs.stringNames = make(map[string]Tag)
