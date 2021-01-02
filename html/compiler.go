@@ -13,12 +13,6 @@ type templateCompiler struct {
 	bindings       *BindingSet
 }
 
-func newTemplateCompiler() *templateCompiler {
-	return &templateCompiler{
-		bindings: &BindingSet{},
-	}
-}
-
 func (tc *templateCompiler) freshLine() bool {
 	if tc.pending == nil {
 		return len(tc.chunks) == 0

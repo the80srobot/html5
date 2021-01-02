@@ -38,7 +38,7 @@ func (t *Template) String() string {
 }
 
 func Compile(n Node, depth int, bs *BindingSet, opts *CompileOptions) (*Template, error) {
-	tc := newTemplateCompiler()
+	tc := &templateCompiler{bindings: bs}
 	tc.separateChunks = opts.SeparateStaticChunks
 	if err := n.compile(tc, depth, opts); err != nil {
 		return nil, err
