@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/the80srobot/html5/bindings"
+	"github.com/the80srobot/html5/safe"
 )
 
 func TestSubsection(t *testing.T) {
@@ -11,7 +13,7 @@ func TestSubsection(t *testing.T) {
 		comment string
 		input   *SubsectionNode
 		opts    *CompileOptions
-		values  []ValueArg
+		values  []bindings.BindArg
 		depth   int
 		output  string
 	}{
@@ -21,20 +23,20 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: Binding("user")},
-						&TextNode{Value: FullyTrustedString(" says ")},
-						&TextNode{Value: Binding("comment")},
-						&TextNode{Value: FullyTrustedString("\n")},
+						&TextNode{Value: bindings.Declare("user")},
+						&TextNode{Value: safe.Const(" says ")},
+						&TextNode{Value: bindings.Declare("comment")},
+						&TextNode{Value: safe.Const("\n")},
 					},
 				},
 			},
 			opts: &Debug,
-			values: []ValueArg{
+			values: []bindings.BindArg{
 				{
 					Name: "user_comments",
-					Subsections: [][]ValueArg{
-						{{Name: "user", SafeString: FullyTrustedString("John")}, {Name: "comment", SafeString: FullyTrustedString("Hello!")}},
-						{{Name: "user", SafeString: FullyTrustedString("Jane")}, {Name: "comment", SafeString: FullyTrustedString("Howdy!")}},
+					NestedRows: [][]bindings.BindArg{
+						{{Name: "user", Value: safe.Const("John")}, {Name: "comment", Value: safe.Const("Hello!")}},
+						{{Name: "user", Value: safe.Const("Jane")}, {Name: "comment", Value: safe.Const("Howdy!")}},
 					},
 				},
 			},
@@ -47,34 +49,34 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: Binding("user")},
-						&TextNode{Value: FullyTrustedString(" says ")},
-						&TextNode{Value: Binding("comment")},
+						&TextNode{Value: bindings.Declare("user")},
+						&TextNode{Value: safe.Const(" says ")},
+						&TextNode{Value: bindings.Declare("comment")},
 						&SubsectionNode{
 							Name:      "comment_replies",
-							Prototype: &TextNode{Value: Binding("reply")},
+							Prototype: &TextNode{Value: bindings.Declare("reply")},
 						},
-						&TextNode{Value: FullyTrustedString("\n")},
+						&TextNode{Value: safe.Const("\n")},
 					},
 				},
 			},
 			opts: &Debug,
-			values: []ValueArg{
+			values: []bindings.BindArg{
 				{
 					Name: "user_comments",
-					Subsections: [][]ValueArg{
+					NestedRows: [][]bindings.BindArg{
 						{
-							{Name: "user", SafeString: FullyTrustedString("John")},
-							{Name: "comment", SafeString: FullyTrustedString("Hello!")},
+							{Name: "user", Value: safe.Const("John")},
+							{Name: "comment", Value: safe.Const("Hello!")},
 							{
 								Name: "comment_replies",
-								Subsections: [][]ValueArg{
-									{{Name: "reply", SafeString: FullyTrustedString("Love!")}},
-									{{Name: "reply", SafeString: FullyTrustedString("Good to see you!")}},
+								NestedRows: [][]bindings.BindArg{
+									{{Name: "reply", Value: safe.Const("Love!")}},
+									{{Name: "reply", Value: safe.Const("Good to see you!")}},
 								},
 							},
 						},
-						{{Name: "user", SafeString: FullyTrustedString("Jane")}, {Name: "comment", SafeString: FullyTrustedString("Howdy!")}},
+						{{Name: "user", Value: safe.Const("Jane")}, {Name: "comment", Value: safe.Const("Howdy!")}},
 					},
 				},
 			},

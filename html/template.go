@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/the80srobot/html5/bindings"
 )
 
 type Node interface {
@@ -11,13 +13,13 @@ type Node interface {
 }
 
 type Template struct {
+	Bindings *bindings.Map
 	chunks   []chunk
-	Bingings *BindingSet
 }
 
-func (t *Template) GenerateHTML(w io.Writer, vs *ValueSet) error {
+func (t *Template) GenerateHTML(w io.Writer, vm *bindings.ValueMap) error {
 	for i, chunk := range t.chunks {
-		if err := chunk.build(w, vs); err != nil {
+		if err := chunk.build(w, vm); err != nil {
 			return fmt.Errorf("building chunk #%d of %d: %w", i, len(t.chunks), err)
 		}
 	}
@@ -27,24 +29,23 @@ func (t *Template) GenerateHTML(w io.Writer, vs *ValueSet) error {
 func (t *Template) String() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Template{\n")
-	for name, tag := range t.Bingings.stringNames {
-		fmt.Fprintf(&sb, "  binding tag %s: %d\n", name, tag)
-	}
 	for i, c := range t.chunks {
-		fmt.Fprintf(&sb, "  chunk %d/%d: %v\n", i+1, len(t.chunks), c)
+		fmt.Fprintf(&sb, "\tchunk %d/%d: %v\n", i+1, len(t.chunks), c)
 	}
+	sb.WriteString("\n\t-- bindings follow after this line --\n\n")
+	t.Bindings.DebugDump(&sb, 1)
 	sb.WriteByte('}')
 	return sb.String()
 }
 
-func Compile(n Node, depth int, bs *BindingSet, opts *CompileOptions) (*Template, error) {
-	tc := &templateCompiler{bindings: bs}
+func Compile(n Node, depth int, m *bindings.Map, opts *CompileOptions) (*Template, error) {
+	tc := &templateCompiler{bindings: m}
 	tc.separateChunks = opts.SeparateStaticChunks
 	if err := n.compile(tc, depth, opts); err != nil {
 		return nil, err
 	}
 	tc.flush()
-	return &Template{chunks: tc.chunks, Bingings: tc.bindings}, nil
+	return &Template{chunks: tc.chunks, Bindings: tc.bindings}, nil
 }
 
 type IndentStyle int16
@@ -83,14 +84,14 @@ func (opts *CompileOptions) String() string {
 }
 
 type chunk interface {
-	build(w io.Writer, vs *ValueSet) error
+	build(w io.Writer, vm *bindings.ValueMap) error
 }
 
 type staticChunk struct {
 	data string
 }
 
-func (sc staticChunk) build(w io.Writer, _ *ValueSet) error {
+func (sc staticChunk) build(w io.Writer, _ *bindings.ValueMap) error {
 	_, err := io.WriteString(w, sc.data)
 	return err
 }
@@ -100,13 +101,15 @@ func (sc staticChunk) String() string {
 }
 
 type stringBindingChunk struct {
-	stringTag Tag
+	binding bindings.Var
 }
 
-func (sbc stringBindingChunk) build(w io.Writer, vs *ValueSet) error {
-	return vs.writeStringTo(w, sbc.stringTag)
+func (sbc stringBindingChunk) build(w io.Writer, vm *bindings.ValueMap) error {
+	_, err := io.WriteString(w, vm.GetString(&sbc.binding))
+	return err
+
 }
 
 func (sbc stringBindingChunk) String() string {
-	return fmt.Sprintf("stringBinding{%v}", sbc.stringTag)
+	return fmt.Sprintf("stringBinding{%v}", sbc.binding)
 }

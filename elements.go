@@ -1,16 +1,12 @@
 package html5
 
 import (
-	"fmt"
 	"io"
 
+	"github.com/the80srobot/html5/bindings"
 	"github.com/the80srobot/html5/html"
+	"github.com/the80srobot/html5/safe"
 )
-
-type Document struct {
-	Template *html.Template
-	Bindings *html.BindingSet
-}
 
 // An Input is an Option or an html.Node.
 type Input interface{}
@@ -19,24 +15,25 @@ type Input interface{}
 // untrustred.
 type String interface{}
 
-func (d *Document) GenerateHTML(w io.Writer, values ...html.ValueArg) error {
-	vs, err := d.Bindings.Bind(values...)
+func GenerateHTML(w io.Writer, t *html.Template, values ...bindings.BindArg) error {
+	vm, err := t.Bindings.Bind()
 	if err != nil {
 		return err
 	}
-	return d.Template.GenerateHTML(w, vs)
+	bindings.Bind(vm, values...)
+	return t.GenerateHTML(w, vm)
 }
 
-func Compile(node html.Node, bs *html.BindingSet, opts *html.CompileOptions) (*Document, error) {
-	t, err := html.Compile(node, 0, bs, opts)
+func Compile(node html.Node, m *bindings.Map, opts *html.CompileOptions) (*html.Template, error) {
+	t, err := html.Compile(node, 0, m, opts)
 	if err != nil {
 		return nil, err
 	}
-	return &Document{t, bs}, nil
+	return t, nil
 }
 
-func MustCompile(node html.Node, bs *html.BindingSet, opts *html.CompileOptions) *Document {
-	d, err := Compile(node, bs, opts)
+func MustCompile(node html.Node, m *bindings.Map, opts *html.CompileOptions) *html.Template {
+	d, err := Compile(node, m, opts)
 	if err != nil {
 		panic(err)
 	}
@@ -48,14 +45,14 @@ func HTML(values ...Input) *html.MultiNode {
 	e := Element("html", values...)
 	return &html.MultiNode{
 		Contents: []html.Node{
-			&html.RawNode{HTML: html.FullyTrustedString("<!doctype html>\n")},
+			&html.RawNode{HTML: safe.Const("<!doctype html>\n")},
 			e,
 		},
 	}
 }
 
 func Head(values ...Input) *html.ElementNode {
-	values = append(values, Indent(html.Block), Meta(Attribute("charset", html.FullyTrustedString("utf-8"))))
+	values = append(values, Indent(html.Block), Meta(Attribute("charset", safe.Const("utf-8"))))
 	return Element("head", values...)
 }
 
@@ -84,14 +81,14 @@ func Element(name string, values ...Input) *html.ElementNode {
 	return e
 }
 
-func Attribute(name string, value String) *html.Attribute {
-	return &html.Attribute{Name: name, Value: wrap(value)}
+func Attribute(name string, value safe.String) *html.Attribute {
+	return &html.Attribute{Name: name, Value: value}
 }
 
-func Text(parts ...String) *html.MultiNode {
+func Text(parts ...safe.String) *html.MultiNode {
 	e := &html.MultiNode{Contents: make([]html.Node, 0, len(parts))}
 	for _, part := range parts {
-		e.Contents = append(e.Contents, &html.TextNode{Value: wrap(part)})
+		e.Contents = append(e.Contents, &html.TextNode{Value: part})
 	}
 	return e
 }
@@ -100,21 +97,6 @@ func Multi(nodes ...html.Node) *html.MultiNode {
 	return &html.MultiNode{Contents: nodes}
 }
 
-func Raw(s String) *html.RawNode {
-	return &html.RawNode{HTML: wrap(s)}
-}
-
-func wrap(s String) html.SafeString {
-	switch s := s.(type) {
-	case html.SafeString:
-		return s
-	case string:
-		return html.UntrustedString(s)
-	default:
-		panic(fmt.Sprintf("String must be either string or html.SafeString, not %v", s))
-	}
-}
-
-func Safe(s string) html.SafeString {
-	return html.FullyTrustedString(s)
+func Raw(s safe.String) *html.RawNode {
+	return &html.RawNode{HTML: s}
 }

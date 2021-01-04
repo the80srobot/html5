@@ -1,10 +1,9 @@
 package html
 
 import (
-	"bufio"
-	"fmt"
 	"io"
-	"strings"
+
+	"github.com/the80srobot/html5/bindings"
 )
 
 // SubsectionNode represents a self-contained part of the page, which can be
@@ -18,26 +17,27 @@ type SubsectionNode struct {
 }
 
 func (ns *SubsectionNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
-	t, err := Compile(ns.Prototype, depth, tc.bindings, opts)
+	m := tc.bindings.Nest(ns.Name)
+	t, err := Compile(ns.Prototype, depth, m, opts)
 	if err != nil {
 		return err
 	}
-	tag := tc.bindings.DeclareSubsection(ns.Name, t.Bingings)
-	tc.appendChunk(subsectionChunk{template: *t, binding: tag})
+	tc.appendChunk(subsectionChunk{template: *t, bindings: m})
 	return nil
 }
 
 type subsectionChunk struct {
 	template Template
-	binding  Tag
+	bindings *bindings.Map
 }
 
-func (sc subsectionChunk) build(w io.Writer, vs *ValueSet) error {
-	next, err := vs.iterateSubsection(sc.binding)
-	if err != nil {
-		return err
+func (sc subsectionChunk) build(w io.Writer, vm *bindings.ValueMap) error {
+	stream := vm.GetStream(sc.bindings)
+	if stream == nil {
+		return nil
 	}
 
+	next := stream.Stream()
 	for sectionValues := next(); sectionValues != nil; sectionValues = next() {
 		if err := sc.template.GenerateHTML(w, sectionValues); err != nil {
 			return err
@@ -47,19 +47,19 @@ func (sc subsectionChunk) build(w io.Writer, vs *ValueSet) error {
 	return nil
 }
 
-func (sc subsectionChunk) String() string {
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "subsection(%v) {\n", sc.binding)
+// func (sc subsectionChunk) String() string {
+// 	var sb strings.Builder
+// 	fmt.Fprintf(&sb, "subsection(%v) {\n", sc.bindings)
 
-	scanner := bufio.NewScanner(strings.NewReader(sc.template.String()))
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		sb.WriteByte('\t')
-		sb.WriteString(line)
-		sb.WriteByte('\n')
-	}
+// 	scanner := bufio.NewScanner(strings.NewReader(sc.template.String()))
+// 	scanner.Split(bufio.ScanLines)
+// 	for scanner.Scan() {
+// 		line := scanner.Text()
+// 		sb.WriteByte('\t')
+// 		sb.WriteString(line)
+// 		sb.WriteByte('\n')
+// 	}
 
-	sb.WriteString("\n}")
-	return sb.String()
-}
+// 	sb.WriteString("\n}")
+// 	return sb.String()
+// }

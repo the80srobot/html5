@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+
+	"github.com/the80srobot/html5/bindings"
 )
 
 type TextNode struct {
-	Value SafeString
+	Value Value
 	Width int
 }
 
@@ -21,20 +23,21 @@ func (t *TextNode) compile(tc *templateCompiler, depth int, opts *CompileOptions
 
 type textBindingChunk struct {
 	TextNode
-	stringTag Tag
-	indent    string
-	depth     int
+	binding bindings.Var
+	indent  string
+	depth   int
 }
 
-func (tc textBindingChunk) build(w io.Writer, vs *ValueSet) error {
+func (tc textBindingChunk) build(w io.Writer, vm *bindings.ValueMap) error {
 	// An optimization: if we don't need to break up the lines then we can just
 	// print the binding value as is.
 	if tc.Width <= 0 {
-		return vs.writeStringTo(w, tc.stringTag)
+		_, err := io.WriteString(w, vm.GetString(&tc.binding))
+		return err
 	}
 
 	var b bytes.Buffer
-	if err := vs.writeStringTo(&b, tc.stringTag); err != nil {
+	if _, err := io.WriteString(&b, vm.GetString(&tc.binding)); err != nil {
 		return err
 	}
 	return fprintBlockText(w, tc.depth, tc.Width, tc.indent, &b)
@@ -42,5 +45,5 @@ func (tc textBindingChunk) build(w io.Writer, vs *ValueSet) error {
 
 func (tc textBindingChunk) String() string {
 	return fmt.Sprintf("textBinding{%v, tag=%v, indent=%q, depth=%d}",
-		&tc.TextNode, tc.stringTag, tc.indent, tc.depth)
+		&tc.TextNode, tc.binding, tc.indent, tc.depth)
 }

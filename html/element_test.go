@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/the80srobot/html5/bindings"
+	"github.com/the80srobot/html5/safe"
 )
 
 func TestElementNode(t *testing.T) {
@@ -13,7 +15,7 @@ func TestElementNode(t *testing.T) {
 		comment string
 		input   *ElementNode
 		opts    *CompileOptions
-		values  []ValueArg
+		values  []bindings.BindArg
 		depth   int
 		output  string
 	}{
@@ -22,9 +24,9 @@ func TestElementNode(t *testing.T) {
 			input: &ElementNode{
 				IndentStyle: Block,
 				Name:        "p",
-				Attributes:  []Attribute{{Name: "id", Value: FullyTrustedString("hello")}},
+				Attributes:  []Attribute{{Name: "id", Value: safe.Const("hello")}},
 				Contents: []Node{
-					&TextNode{Value: FullyTrustedString("Hello, World!"), Width: 1},
+					&TextNode{Value: safe.Const("Hello, World!"), Width: 1},
 				}},
 			opts: &Tidy,
 			output: `<p id="hello">
@@ -42,14 +44,14 @@ func TestElementNode(t *testing.T) {
 						Name:        "span",
 						IndentStyle: Block,
 						Contents: []Node{
-							&TextNode{Value: FullyTrustedString("Span")},
+							&TextNode{Value: safe.Const("Span")},
 						},
 					},
 					&ElementNode{
 						Name:        "span",
 						IndentStyle: Block,
 						Contents: []Node{
-							&TextNode{Value: FullyTrustedString("Span")},
+							&TextNode{Value: safe.Const("Span")},
 						},
 					},
 				},
@@ -70,11 +72,11 @@ func TestElementNode(t *testing.T) {
 				IndentStyle: Inline,
 				Name:        "a",
 				Attributes: []Attribute{
-					{Name: "href", Value: FullyTrustedString("#title_1")},
-					{Name: "rel", Value: FullyTrustedString("nofollow")},
-					{Name: "target", Value: FullyTrustedString("_blank")},
+					{Name: "href", Value: safe.Const("#title_1")},
+					{Name: "rel", Value: safe.Const("nofollow")},
+					{Name: "target", Value: safe.Const("_blank")},
 				},
-				Contents: []Node{&TextNode{Value: FullyTrustedString("Hello!")}},
+				Contents: []Node{&TextNode{Value: safe.Const("Hello!")}},
 			},
 			opts:   &Tidy,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
@@ -85,19 +87,19 @@ func TestElementNode(t *testing.T) {
 				IndentStyle: Inline,
 				Name:        "a",
 				Attributes: []Attribute{
-					{Name: "href", Value: Binding("href")},
-					{Name: "rel", Value: Binding("rel")},
-					{Name: "target", Value: Binding("target")},
+					{Name: "href", Value: bindings.Declare("href")},
+					{Name: "rel", Value: bindings.Declare("rel")},
+					{Name: "target", Value: bindings.Declare("target")},
 				},
 				Contents: []Node{
-					&TextNode{Value: Binding("hello")},
+					&TextNode{Value: bindings.Declare("hello")},
 				},
 			},
-			values: []ValueArg{
-				{Name: "href", SafeString: TrustedString("#title_1", URLSafe)},
-				{Name: "rel", SafeString: TrustedString("nofollow", FullyTrusted)},
-				{Name: "target", SafeString: TrustedString("_blank", AttributeSafe)},
-				{Name: "hello", SafeString: TrustedString("Hello!", TextSafe)},
+			values: []bindings.BindArg{
+				{Name: "href", Value: safe.Const("#title_1")},
+				{Name: "rel", Value: safe.Const("nofollow")},
+				{Name: "target", Value: safe.Const("_blank")},
+				{Name: "hello", Value: safe.Const("Hello!")},
 			},
 			opts:   &Tidy,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",

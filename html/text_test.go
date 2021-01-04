@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/the80srobot/html5/bindings"
+	"github.com/the80srobot/html5/safe"
 )
 
 func TestTextNode(t *testing.T) {
@@ -11,48 +13,48 @@ func TestTextNode(t *testing.T) {
 		comment string
 		input   *TextNode
 		opts    *CompileOptions
-		values  []ValueArg
+		values  []bindings.BindArg
 		depth   int
 		output  string
 	}{
 		{
 			comment: "one line static",
-			input:   &TextNode{Value: FullyTrustedString("Hello, World!")},
+			input:   &TextNode{Value: safe.Const("Hello, World!")},
 			opts:    &CompileOptions{},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "two lines static inline",
-			input:   &TextNode{Value: FullyTrustedString("Hello, World!"), Width: 1},
+			input:   &TextNode{Value: safe.Const("Hello, World!"), Width: 1},
 			opts:    &CompileOptions{},
 			output:  "Hello,\nWorld!",
 		},
 		{
 			comment: "block one line",
-			input:   &TextNode{Value: FullyTrustedString("Hello, World!")},
+			input:   &TextNode{Value: safe.Const("Hello, World!")},
 			depth:   1,
 			opts:    &CompileOptions{Indent: "  "},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "block two lines",
-			input:   &TextNode{Value: FullyTrustedString("Hello, World!"), Width: 1},
+			input:   &TextNode{Value: safe.Const("Hello, World!"), Width: 1},
 			depth:   1,
 			opts:    &CompileOptions{Indent: "  "},
 			output:  "Hello,\n  World!",
 		},
 		{
 			comment: "binding",
-			input:   &TextNode{Value: Binding("hello")},
+			input:   &TextNode{Value: bindings.Declare("hello")},
 			opts:    &CompileOptions{},
-			values:  []ValueArg{{Name: "hello", SafeString: TrustedString("Hello, World!", TextSafe)}},
+			values:  []bindings.BindArg{{Name: "hello", Value: safe.Const("Hello, World!")}},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "untrusted binding",
-			input:   &TextNode{Value: Binding("hello")},
+			input:   &TextNode{Value: bindings.Declare("hello")},
 			opts:    &CompileOptions{},
-			values:  []ValueArg{{Name: "hello", SafeString: UntrustedString("<p>Hello, World!</p>")}},
+			values:  []bindings.BindArg{{Name: "hello", Value: safe.EscapeText("<p>Hello, World!</p>")}},
 			output:  "&lt;p&gt;Hello, World!&lt;/p&gt;",
 		},
 	} {

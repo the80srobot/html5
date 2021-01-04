@@ -2,7 +2,4 @@ module github.com/the80srobot/html5
 
 go 1.14
 
-require (
-	github.com/google/go-cmp v0.5.4
-	github.com/google/safehtml v0.0.2
-)
+require github.com/google/go-cmp v0.5.4

@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/the80srobot/html5/bindings"
+	"github.com/the80srobot/html5/safe"
 )
 
 type templateCompiler struct {
 	pending        *bytes.Buffer
 	chunks         []chunk
 	separateChunks bool
-	bindings       *BindingSet
+	bindings       *bindings.Map
 }
 
 func (tc *templateCompiler) freshLine() bool {
@@ -46,9 +49,10 @@ func (tc *templateCompiler) appendChunk(c chunk) {
 	tc.chunks = append(tc.chunks, c)
 }
 
-func (tc *templateCompiler) appendStringBinding(name string, trust StringTrust) {
-	tag := tc.bindings.DeclareString(name, trust)
-	tc.appendChunk(stringBindingChunk{stringTag: tag})
+func (tc *templateCompiler) appendVar(v bindings.Var, trust safe.TrustLevel) bindings.Var {
+	v = tc.bindings.Attach(v, trust)
+	tc.appendChunk(stringBindingChunk{binding: v})
+	return v
 }
 
 func (tc *templateCompiler) Write(p []byte) (int, error) {
@@ -125,33 +129,39 @@ func appendAttribute(tc *templateCompiler, a *Attribute) error {
 	// contains URLs).
 	reqTrust, ok := requiredTrustPerAttribute[a.Name]
 	if !ok {
-		reqTrust = FullyTrusted
+		reqTrust = safe.FullyTrusted
 	}
 
-	if a.Value.Constant() {
-		constant, err := a.Value.Convert(reqTrust)
+	switch v := a.Value.(type) {
+	case safe.String:
+		s, err := safe.Check(v, reqTrust)
 		if err != nil {
 			return err
 		}
-		_, err = fmt.Fprintf(tc, "%s\"", constant)
+		_, err = fmt.Fprintf(tc, "%s\"", s)
 		return err
+	case bindings.Var:
+		tc.appendVar(v, reqTrust)
+		_, err := fmt.Fprint(tc, "\"")
+		return err
+	default:
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v is neither", v)
 	}
-
-	tc.appendStringBinding(a.Value.binding, reqTrust)
-	_, err := fmt.Fprint(tc, "\"")
-	return err
 }
 
 func appendText(tc *templateCompiler, depth int, text *TextNode, indent string) error {
-	if text.Value.Constant() {
-		constant, err := text.Value.Convert(TextSafe)
+	switch v := text.Value.(type) {
+	case safe.String:
+		s, err := safe.Check(v, safe.TextSafe)
 		if err != nil {
 			return err
 		}
-		return fprintBlockText(tc, depth, text.Width, indent, strings.NewReader(constant))
+		return fprintBlockText(tc, depth, text.Width, indent, strings.NewReader(s))
+	case bindings.Var:
+		v = tc.bindings.Attach(v, safe.TextSafe)
+		tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, binding: v})
+		return nil
+	default:
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v is neither", v)
 	}
-
-	tag := tc.bindings.DeclareString(text.Value.binding, TextSafe)
-	tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, stringTag: tag})
-	return nil
 }

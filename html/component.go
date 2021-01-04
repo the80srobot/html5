@@ -3,6 +3,8 @@ package html
 import (
 	"fmt"
 	"io"
+
+	"github.com/the80srobot/html5/bindings"
 )
 
 type Case struct {
@@ -10,7 +12,7 @@ type Case struct {
 	Output    Node
 }
 
-type Condition func(*ValueSet) bool
+type Condition func(*bindings.ValueMap) bool
 
 type SwitchNode struct {
 	Cases   []Case
@@ -52,18 +54,18 @@ type switchChunk struct {
 	templates  []*Template
 }
 
-func (sc switchChunk) build(w io.Writer, vs *ValueSet) error {
+func (sc switchChunk) build(w io.Writer, vm *bindings.ValueMap) error {
 	for i, c := range sc.conditions {
-		if c(vs) {
+		if c(vm) {
 			if t := sc.templates[i]; t != nil {
-				return t.GenerateHTML(w, vs)
+				return t.GenerateHTML(w, vm)
 			}
 			return nil
 		}
 	}
 
 	if t := sc.templates[len(sc.templates)-1]; t != nil {
-		return t.GenerateHTML(w, vs)
+		return t.GenerateHTML(w, vm)
 	}
 	return nil
 }
