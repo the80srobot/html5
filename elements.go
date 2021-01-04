@@ -81,11 +81,11 @@ func Element(name string, values ...Input) *html.ElementNode {
 	return e
 }
 
-func Attribute(name string, value safe.String) *html.Attribute {
+func Attribute(name string, value html.Value) *html.Attribute {
 	return &html.Attribute{Name: name, Value: value}
 }
 
-func Text(parts ...safe.String) *html.MultiNode {
+func Text(parts ...html.Value) *html.MultiNode {
 	e := &html.MultiNode{Contents: make([]html.Node, 0, len(parts))}
 	for _, part := range parts {
 		e.Contents = append(e.Contents, &html.TextNode{Value: part})
@@ -97,6 +97,6 @@ func Multi(nodes ...html.Node) *html.MultiNode {
 	return &html.MultiNode{Contents: nodes}
 }
 
-func Raw(s safe.String) *html.RawNode {
+func Raw(s html.Value) *html.RawNode {
 	return &html.RawNode{HTML: s}
 }
