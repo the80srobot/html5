@@ -6,6 +6,11 @@ import (
 	"github.com/the80srobot/html5/safe"
 )
 
+func GetStringByName(vm *ValueMap, name string) string {
+	v := vm.Vars.Declare(name, safe.Default)
+	return v.Get(vm)
+}
+
 func Bind(vm *ValueMap, args ...BindArg) error {
 	for _, arg := range args {
 		if arg.Value == nil {
