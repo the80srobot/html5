@@ -2,6 +2,7 @@ package html
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/the80srobot/html5/bindings"
 	"github.com/the80srobot/html5/safe"
@@ -25,6 +26,6 @@ func (r *RawNode) compile(tc *templateCompiler, _ int, _ *CompileOptions) error 
 		tc.appendVar(v, safe.HTMLSafe)
 		return nil
 	default:
-		return fmt.Errorf("value must be safe.String or *bindings.Var, %v is neither", v)
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
 	}
 }

@@ -3,6 +3,7 @@ package html
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/the80srobot/html5/bindings"
@@ -145,7 +146,7 @@ func appendAttribute(tc *templateCompiler, a *Attribute) error {
 		_, err := fmt.Fprint(tc, "\"")
 		return err
 	default:
-		return fmt.Errorf("value must be safe.String or *bindings.Var, %v is neither", v)
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
 	}
 }
 
@@ -162,6 +163,6 @@ func appendText(tc *templateCompiler, depth int, text *TextNode, indent string) 
 		tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, binding: v})
 		return nil
 	default:
-		return fmt.Errorf("value must be safe.String or *bindings.Var, %v is neither", v)
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
 	}
 }
