@@ -31,7 +31,7 @@ func Example() {
 
 	commentStream := values.GetStream(comments)
 	firstCommentValue := commentStream.Stream()()
-	fmt.Printf("First comment's author: %s", firstCommentValue.GetString(&commentAuthor))
+	fmt.Printf("First comment's author: %s", firstCommentValue.GetString(commentAuthor))
 
 	// Output: First comment's author: Peter
 }

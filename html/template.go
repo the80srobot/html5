@@ -105,7 +105,7 @@ type stringBindingChunk struct {
 }
 
 func (sbc stringBindingChunk) build(w io.Writer, vm *bindings.ValueMap) error {
-	_, err := io.WriteString(w, vm.GetString(&sbc.binding))
+	_, err := io.WriteString(w, vm.GetString(sbc.binding))
 	return err
 
 }

@@ -69,7 +69,7 @@ func bindString(vm *ValueMap, arg BindArg) error {
 		v = vm.Vars.Attach(v, arg.TrustRequirement)
 	}
 
-	val, err := v.Set(arg.Value)
+	val, err := v.TrySet(arg.Value)
 	if err != nil {
 		return err
 	}

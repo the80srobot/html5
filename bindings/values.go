@@ -13,6 +13,7 @@ type Value struct {
 	idx           int
 	value         string
 	stream        ValueStream
+	setError      error
 	debugOnlyName string
 }
 
@@ -33,13 +34,13 @@ func (vm *ValueMap) DebugDump(w io.Writer, depth int) {
 
 	fmt.Fprintf(w, "%sValueMap{ Strict=%v", indent, vm.Vars.Strict)
 	if vm.Vars.nameInParent != "" {
-		fmt.Fprintf(w, "(nested, named %q)", vm.Vars.nameInParent)
+		fmt.Fprintf(w, " (nested, named %q)", vm.Vars.nameInParent)
 	}
 	fmt.Fprint(w, "\n")
 
 	for i, v := range vm.Vars.vars {
 		fmt.Fprintf(w, "%s\tvar %d/%d: %q@%d (%v)\n", indent, i+1, len(vm.Vars.vars), v.name, v.idx, v.level)
-		if s := vm.GetString(&v); s != "" {
+		if s := vm.GetString(v); s != "" {
 			fmt.Fprintf(w, "%s\t\tstring %q\n", indent, s)
 		} else {
 			fmt.Fprintf(w, "%s\t\t(empty)\n", indent)
@@ -55,20 +56,18 @@ func (vm *ValueMap) DebugDump(w io.Writer, depth int) {
 		}
 
 		next := stream.Stream()
-		for {
-			nvm := next()
-			if nvm == nil {
-				break
-			}
-
-			nvm.DebugDump(w, depth+1)
+		j := 0
+		for nvm := next(); nvm != nil; nvm = next() {
+			j++
+			fmt.Fprintf(w, "%s\tinstantiation (ValueMap) #%d:\n", indent, j)
+			nvm.DebugDump(w, depth+2)
 		}
 	}
 
 	fmt.Fprintf(w, "%s}\n", indent)
 }
 
-func (vm *ValueMap) addStream(v Value) error {
+func (vm *ValueMap) setNestedMapStream(v Value) error {
 	limit := len(vm.Vars.maps)
 	if limit <= v.idx {
 		return fmt.Errorf("%w subsection value stream %s", ErrUndefined, v.debugOnlyName)
@@ -83,7 +82,7 @@ func (vm *ValueMap) addStream(v Value) error {
 	return nil
 }
 
-func (vm *ValueMap) addValue(v Value) error {
+func (vm *ValueMap) setValue(v Value) error {
 	limit := len(vm.Vars.vars)
 	if limit <= v.idx {
 		return fmt.Errorf("%w var %s", ErrUndefined, v.debugOnlyName)
@@ -99,19 +98,25 @@ func (vm *ValueMap) addValue(v Value) error {
 }
 
 func (vm *ValueMap) Set(v Value) error {
-	if v.stream != nil {
-		return vm.addStream(v)
+	if v.setError != nil {
+		return fmt.Errorf("value %q could not be set: %w", v.debugOnlyName, v.setError)
 	}
-	return vm.addValue(v)
+	if v.stream != nil {
+		return vm.setNestedMapStream(v)
+	}
+	return vm.setValue(v)
 }
 
-func (vm *ValueMap) GetString(v *Var) string {
+func (vm *ValueMap) GetString(v Var) string {
 	if len(vm.values) <= v.idx {
 		return ""
 	}
 
-	if v.idx < 0 {
-		panic(fmt.Sprintf("%v is unattached (programmer error - free variables MUST be attached to a map", v))
+	if v.checkOnlyAttachedMap == nil {
+		panic(fmt.Sprintf("%v is unattached (programmer error - free variables MUST be attached to a map)", v))
+	}
+	if v.checkOnlyAttachedMap != vm.Vars {
+		panic(fmt.Sprintf("%v is bound to the map %q, this ValueMap is instantiated from %q (programmer error - variable used in wrong context)", v, v.checkOnlyAttachedMap.DebugName(), vm.Vars.DebugName()))
 	}
 
 	return vm.values[v.idx]

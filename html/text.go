@@ -32,12 +32,12 @@ func (tc textBindingChunk) build(w io.Writer, vm *bindings.ValueMap) error {
 	// An optimization: if we don't need to break up the lines then we can just
 	// print the binding value as is.
 	if tc.Width <= 0 {
-		_, err := io.WriteString(w, vm.GetString(&tc.binding))
+		_, err := io.WriteString(w, vm.GetString(tc.binding))
 		return err
 	}
 
 	var b bytes.Buffer
-	if _, err := io.WriteString(&b, vm.GetString(&tc.binding)); err != nil {
+	if _, err := io.WriteString(&b, vm.GetString(tc.binding)); err != nil {
 		return err
 	}
 	return fprintBlockText(w, tc.depth, tc.Width, tc.indent, &b)

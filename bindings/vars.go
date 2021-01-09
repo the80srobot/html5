@@ -12,9 +12,10 @@ import (
 
 // Var uniquelly names a string variable and its required trust level.
 type Var struct {
-	idx   int
-	name  string
-	level safe.TrustLevel
+	idx                  int
+	name                 string
+	level                safe.TrustLevel
+	checkOnlyAttachedMap *Map
 }
 
 func (v Var) String() string {
@@ -27,10 +28,10 @@ func Declare(name string) Var {
 	if name == "" {
 		panic("Var name cannot be empty")
 	}
-	return Var{name: name, level: safe.Untrusted, idx: -1}
+	return Var{name: name, level: safe.Untrusted}
 }
 
-func (v Var) Set(ss safe.String) (Value, error) {
+func (v Var) TrySet(ss safe.String) (Value, error) {
 	s, err := safe.Check(ss, v.level)
 	if err != nil {
 		return Value{}, fmt.Errorf("binding value %s: %w", v.name, err)
@@ -38,20 +39,18 @@ func (v Var) Set(ss safe.String) (Value, error) {
 	return Value{debugOnlyName: v.name, idx: v.idx, value: s}, nil
 }
 
-func (v Var) MustSet(ss safe.String) Value {
-	value, err := v.Set(ss)
-	if err != nil {
-		panic(err)
-	}
+func (v Var) Set(ss safe.String) Value {
+	value, err := v.TrySet(ss)
+	value.setError = err
 	return value
 }
 
 func (v Var) Get(vm *ValueMap) string {
-	return vm.GetString(&v)
+	return vm.GetString(v)
 }
 
 func (v Var) Attached() bool {
-	return v.idx >= 0
+	return v.checkOnlyAttachedMap != nil
 }
 
 type constString string
@@ -77,6 +76,14 @@ func (m *Map) String() string {
 	var sb strings.Builder
 	m.DebugDump(&sb, 0)
 	return sb.String()
+}
+
+func (m *Map) DebugName() string {
+	if m.nameInParent != "" {
+		return m.nameInParent
+	}
+
+	return "root"
 }
 
 func (m *Map) DebugDump(w io.Writer, depth int) {
@@ -112,7 +119,7 @@ func (m *Map) Declare(name string, level safe.TrustLevel) Var {
 	}
 
 	idx = len(m.vars)
-	m.vars = append(m.vars, Var{idx: idx, name: name, level: level})
+	m.vars = append(m.vars, Var{idx: idx, name: name, level: level, checkOnlyAttachedMap: m})
 	if m.varsByName == nil {
 		m.varsByName = map[string]int{name: idx}
 	} else {
