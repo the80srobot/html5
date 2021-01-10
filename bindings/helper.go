@@ -8,7 +8,7 @@ import (
 
 func GetStringByName(vm *ValueMap, name string) string {
 	v := vm.Vars.Declare(name, safe.Default)
-	return v.Get(vm)
+	return vm.GetString(v)
 }
 
 func Bind(vm *ValueMap, args ...BindArg) error {
@@ -58,7 +58,7 @@ func bindSubsection(vm *ValueMap, arg BindArg) error {
 		}
 		series = append(series, nestedVM)
 	}
-	return vm.Set(m.SetStream(series))
+	return vm.Set(m.BindStream(series))
 }
 
 func bindString(vm *ValueMap, arg BindArg) error {
@@ -69,9 +69,5 @@ func bindString(vm *ValueMap, arg BindArg) error {
 		v = vm.Vars.Attach(v, arg.TrustRequirement)
 	}
 
-	val, err := v.TrySet(arg.Value)
-	if err != nil {
-		return err
-	}
-	return vm.Set(val)
+	return vm.Set(v.Bind(arg.Value))
 }

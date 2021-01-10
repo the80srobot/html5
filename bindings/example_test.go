@@ -18,16 +18,16 @@ func Example() {
 	commentAuthor := comments.Declare("author", safe.TextSafe)
 
 	values := m.MustBind(
-		userName.SetConst("adam"),
-		articleURL.SetConst("https://something.com"),
-		articleHTML.SetConst("<p>...</p>"),
-		comments.SetSeries(
+		userName.BindConst("adam"),
+		articleURL.BindConst("https://something.com"),
+		articleHTML.BindConst("<p>...</p>"),
+		comments.BindSeries(
 			comments.MustBind(
-				commentHTML.SetConst("<p>Hello!</p>"),
-				commentAuthor.SetConst("Peter")),
+				commentHTML.BindConst("<p>Hello!</p>"),
+				commentAuthor.BindConst("Peter")),
 			comments.MustBind(
-				commentHTML.SetConst("<p>Hello!</p>"),
-				commentAuthor.SetConst("Paul"))))
+				commentHTML.BindConst("<p>Hello!</p>"),
+				commentAuthor.BindConst("Paul"))))
 
 	commentStream := values.GetStream(comments)
 	firstCommentValue := commentStream.Stream()()

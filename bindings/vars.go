@@ -12,9 +12,10 @@ import (
 
 // Var uniquelly names a string variable and its required trust level.
 type Var struct {
-	idx                  int
-	name                 string
-	level                safe.TrustLevel
+	idx   int
+	name  string
+	level safe.TrustLevel
+	// The map this var is in. Only to be used for correctness checks.
 	checkOnlyAttachedMap *Map
 }
 
@@ -31,22 +32,18 @@ func Declare(name string) Var {
 	return Var{name: name, level: safe.Untrusted}
 }
 
-func (v Var) TrySet(ss safe.String) (Value, error) {
+func (v Var) tryBind(ss safe.String) (Value, error) {
 	s, err := safe.Check(ss, v.level)
 	if err != nil {
 		return Value{}, fmt.Errorf("binding value %s: %w", v.name, err)
 	}
-	return Value{debugOnlyName: v.name, idx: v.idx, value: s}, nil
+	return Value{debugOnlyName: v.name, idx: v.idx, value: s, checkOnlyContainingMap: v.checkOnlyAttachedMap}, nil
 }
 
-func (v Var) Set(ss safe.String) Value {
-	value, err := v.TrySet(ss)
+func (v Var) Bind(ss safe.String) Value {
+	value, err := v.tryBind(ss)
 	value.setError = err
 	return value
-}
-
-func (v Var) Get(vm *ValueMap) string {
-	return vm.GetString(v)
 }
 
 func (v Var) Attached() bool {
@@ -55,8 +52,8 @@ func (v Var) Attached() bool {
 
 type constString string
 
-func (v Var) SetConst(value constString) Value {
-	return Value{debugOnlyName: v.name, idx: v.idx, value: string(value)}
+func (v Var) BindConst(value constString) Value {
+	return Value{debugOnlyName: v.name, idx: v.idx, value: string(value), checkOnlyContainingMap: v.checkOnlyAttachedMap}
 }
 
 type Map struct {
@@ -69,42 +66,18 @@ type Map struct {
 	maps         []*Map
 	mapsByName   map[string]int
 
-	disallowCopy sync.Mutex
+	disallowCopy       sync.Mutex
+	checkOnlyParentMap *Map
+}
+
+func (m *Map) Root() bool {
+	return m.checkOnlyParentMap == nil
 }
 
 func (m *Map) String() string {
 	var sb strings.Builder
 	m.DebugDump(&sb, 0)
 	return sb.String()
-}
-
-func (m *Map) DebugName() string {
-	if m.nameInParent != "" {
-		return m.nameInParent
-	}
-
-	return "root"
-}
-
-func (m *Map) DebugDump(w io.Writer, depth int) {
-	indent := strings.Repeat("\t", depth)
-
-	fmt.Fprintf(w, "%sMap{ Strict=%v ", indent, m.Strict)
-	if m.nameInParent != "" {
-		fmt.Fprintf(w, "(nested, named %q)", m.nameInParent)
-	}
-	fmt.Fprint(w, "\n")
-
-	for i, v := range m.vars {
-		fmt.Fprintf(w, "%s\tvar %d/%d: %q@%d (%v)\n", indent, i+1, len(m.vars), v.name, v.idx, v.level)
-	}
-
-	for i, nm := range m.maps {
-		fmt.Fprintf(w, "%s\tnested map %d/%d:\n", indent, i+1, len(m.maps))
-		nm.DebugDump(w, depth+1)
-	}
-
-	fmt.Fprintf(w, "%s}\n", indent)
 }
 
 func (m *Map) Declare(name string, level safe.TrustLevel) Var {
@@ -139,7 +112,7 @@ func (m *Map) Nest(name string) *Map {
 	}
 
 	idx = len(m.maps)
-	m.maps = append(m.maps, &Map{idxInParent: idx, nameInParent: name})
+	m.maps = append(m.maps, &Map{idxInParent: idx, nameInParent: name, checkOnlyParentMap: m})
 	if m.mapsByName == nil {
 		m.mapsByName = map[string]int{name: idx}
 	} else {
@@ -174,18 +147,43 @@ func (m *Map) MustBind(values ...Value) *ValueMap {
 	return vm
 }
 
-func (m *Map) SetStream(stream ValueStream) Value {
+func (m *Map) BindStream(stream ValueStream) Value {
 	return Value{
-		debugOnlyName: m.nameInParent,
-		idx:           m.idxInParent,
-		stream:        stream,
+		idx:                    m.idxInParent,
+		stream:                 stream,
+		debugOnlyName:          m.nameInParent,
+		checkOnlyContainingMap: m.checkOnlyParentMap,
 	}
 }
 
-func (m *Map) SetSeries(maps ...*ValueMap) Value {
-	return m.SetStream(ValueSeries(maps))
+func (m *Map) BindSeries(maps ...*ValueMap) Value {
+	return m.BindStream(ValueSeries(maps))
 }
 
-func (m *Map) GetSeries(vm *ValueMap) ValueStream {
-	return vm.GetStream(m)
+func (m *Map) DebugName() string {
+	if m.Root() {
+		return "root"
+	}
+	return m.nameInParent
+}
+
+func (m *Map) DebugDump(w io.Writer, depth int) {
+	indent := strings.Repeat("\t", depth)
+
+	fmt.Fprintf(w, "%sMap{ Strict=%v ", indent, m.Strict)
+	if m.nameInParent != "" {
+		fmt.Fprintf(w, "(nested, named %q)", m.nameInParent)
+	}
+	fmt.Fprint(w, "\n")
+
+	for i, v := range m.vars {
+		fmt.Fprintf(w, "%s\tvar %d/%d: %q@%d (%v)\n", indent, i+1, len(m.vars), v.name, v.idx, v.level)
+	}
+
+	for i, nm := range m.maps {
+		fmt.Fprintf(w, "%s\tnested map %d/%d:\n", indent, i+1, len(m.maps))
+		nm.DebugDump(w, depth+1)
+	}
+
+	fmt.Fprintf(w, "%s}\n", indent)
 }

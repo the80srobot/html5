@@ -63,21 +63,21 @@ func TestNestedMapsRoundTrip(t *testing.T) {
 
 	// Instantiate a value map and populate it with articles and comments under
 	// the articles.
-	values, err := bindings.Bind(pageTitle.SetConst("Articles"))
+	values, err := bindings.Bind(pageTitle.BindConst("Articles"))
 	if err != nil {
 		t.Fatalf("couldn't create the root value map: %v", err)
 	}
 
 	var articles ValueSeries
 	for _, a := range articleData {
-		article, err := articleBindings.Bind(title.Set(a.title), author.Set(a.author), text.Set(a.text))
+		article, err := articleBindings.Bind(title.Bind(a.title), author.Bind(a.author), text.Bind(a.text))
 		if err != nil {
 			t.Fatalf("couldn't create an article value map: %v", err)
 		}
 
 		var comments ValueSeries
 		for _, c := range a.comments {
-			comment, err := commentBindings.Bind(commentAuthor.Set(c.author), commentText.Set(c.text))
+			comment, err := commentBindings.Bind(commentAuthor.Bind(c.author), commentText.Bind(c.text))
 			if err != nil {
 				t.Fatalf("couldn't create a comment value map: %v", err)
 			}
@@ -86,19 +86,19 @@ func TestNestedMapsRoundTrip(t *testing.T) {
 
 		var tags ValueSeries
 		for _, tg := range a.tags {
-			tag, err := tagBindings.Bind(tag.Set(tg))
+			tag, err := tagBindings.Bind(tag.Bind(tg))
 			if err != nil {
 				t.Fatalf("couldn't create a tag value map: %v", err)
 			}
 			tags = append(tags, tag)
 		}
 
-		article.Set(commentBindings.SetSeries(comments...))
-		article.Set(tagBindings.SetSeries(tags...))
+		article.Set(commentBindings.BindSeries(comments...))
+		article.Set(tagBindings.BindSeries(tags...))
 		articles = append(articles, article)
 	}
 
-	values.Set(articleBindings.SetSeries(articles...))
+	values.Set(articleBindings.BindSeries(articles...))
 	t.Logf("Value dump: %v", values)
 
 	// Check that the data we get back by iterating articles and their comments
@@ -138,17 +138,17 @@ func TestNestedMapsRoundTrip(t *testing.T) {
 	}
 }
 
-func TestNestedMapWrongBinding(t *testing.T) {
+func TestNestedMapWrongBindingGet(t *testing.T) {
 	var page Map
 	pageTitle := page.Declare("title", safe.HTMLSafe)
 
 	articleBindings := page.Nest("articles")
 	articleTitle := articleBindings.Declare("title", safe.HTMLSafe)
 
-	pageValues := page.MustBind(pageTitle.SetConst("Welcome to Zombo.com"))
+	pageValues := page.MustBind(pageTitle.BindConst("Welcome to Zombo.com"))
 
-	articleValues := articleBindings.MustBind(articleTitle.SetConst("Anything is possible at Zombo.com"))
-	pageValues.Set(articleBindings.SetSeries(articleValues))
+	articleValues := articleBindings.MustBind(articleTitle.BindConst("Anything is possible at Zombo.com"))
+	pageValues.Set(articleBindings.BindSeries(articleValues))
 
 	// Trying to use the page-level binding on the article values should fail,
 	// and vice-versa. Because this is considered a programmer error, GetString
@@ -162,6 +162,25 @@ func TestNestedMapWrongBinding(t *testing.T) {
 	articleValues.GetString(pageTitle)
 }
 
+func TestNestedMapWrongBindingSet(t *testing.T) {
+	var page Map
+	page.Declare("title", safe.HTMLSafe)
+
+	articleBindings := page.Nest("articles")
+	articleTitle := articleBindings.Declare("title", safe.HTMLSafe)
+	pageValues := page.MustBind()
+
+	// Trying to use the article-level var to set a value on the page-level
+	// value map should panic. (Considered a programmer error.)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected Set(%v) to panic", articleTitle)
+			r = nil
+		}
+	}()
+	pageValues.Set(articleTitle.BindConst("Welcome to Zombo.com"))
+}
+
 func TestVarAttach(t *testing.T) {
 	v := Declare("foo")
 	var m Map
@@ -170,7 +189,7 @@ func TestVarAttach(t *testing.T) {
 
 	// The variable should now be valid for the map. Test that out by using it
 	// to bind a value.
-	vm, err := m.Bind(v.SetConst("bar"))
+	vm, err := m.Bind(v.BindConst("bar"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,26 +203,26 @@ func TestVarAttach(t *testing.T) {
 func TestTrustClimbing(t *testing.T) {
 	var m Map
 	v := m.Declare("comment_text", safe.TextSafe)
-	if _, err := v.TrySet(safe.UntrustedString("Hello!")); err == nil {
+	if _, err := v.tryBind(safe.UntrustedString("Hello!")); err == nil {
 		t.Error("Var.Set() should fail to set an untrusted string on TextSafe Var")
 	}
 
 	// Declaring the var again with the default trust shouldn't change anything
 	// - text should still be the right level.
 	v = m.Declare("comment_text", safe.Default)
-	if _, err := v.TrySet(safe.Bless(safe.TextSafe, "Hello!")); err != nil {
+	if _, err := v.tryBind(safe.Bless(safe.TextSafe, "Hello!")); err != nil {
 		t.Errorf("Var.Set() of a TextSafe string: %v", err)
 	}
 
 	// This should climb all the way up to fully trusted, as the only way to
 	// reconcile the two trust levels.
 	v = m.Declare("comment_text", safe.URLSafe)
-	if _, err := v.TrySet(safe.Bless(safe.TextSafe, "Hello!")); err == nil {
+	if _, err := v.tryBind(safe.Bless(safe.TextSafe, "Hello!")); err == nil {
 		t.Error("Var.Set() should have refused to set TextSafe after trust climbing to fully trusted")
 	}
 
 	// Fully trusted strings should still be accepted.
-	if _, err := v.TrySet(safe.Bless(safe.FullyTrusted, "Hello!")); err != nil {
+	if _, err := v.tryBind(safe.Bless(safe.FullyTrusted, "Hello!")); err != nil {
 		t.Errorf("Var.Set() of a FullyTrusted string: %v", err)
 	}
 }
