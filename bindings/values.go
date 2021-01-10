@@ -18,6 +18,18 @@ type Value struct {
 	checkOnlyContainingMap *Map
 }
 
+// ValueMap associates Vars to their Values. It may also contain nested
+// ValueMaps, much like Map can contain nested Maps.
+//
+// A note on performance:
+//
+// This is a specialized, high-performance container. On simple lookups and
+// inserts, it outperforms native go maps by a factor of 3. This is possible
+// because the ValueMap knows ahead of time all the keys (Vars) that may set,
+// and so it can preallocate sufficient space and doesn't have to deal with
+// hashing. To realize this performance gain, you must use this package
+// idiomatically - declare Maps on application startup, and then use the same
+// vars throughout the lifetime of the program.
 type ValueMap struct {
 	Vars    *Map
 	values  []string
