@@ -13,6 +13,7 @@ type Attribute struct {
 	Value Value
 }
 
+// Apply will insert the attribute into the node, which must be ElementNode.
 func (a *Attribute) Apply(n Node) error {
 	e, ok := n.(*ElementNode)
 	if !ok {

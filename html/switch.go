@@ -19,6 +19,18 @@ type SwitchNode struct {
 	Default Node
 }
 
+func (sn *SwitchNode) Apply(n Node) error {
+	switch n := n.(type) {
+	case *ElementNode:
+		n.Contents = append(n.Contents, sn)
+	case *MultiNode:
+		n.Contents = append(n.Contents, sn)
+	default:
+		return fmt.Errorf("SwitchNode can only be applied to ElementNode or MultiNode, %v", n)
+	}
+	return nil
+}
+
 func (sn *SwitchNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
 	sc := switchChunk{
 		conditions: make([]Condition, len(sn.Cases)),

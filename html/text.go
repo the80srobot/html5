@@ -16,6 +16,33 @@ type TextNode struct {
 	Width int
 }
 
+func Text(contents ...Value) Node {
+	switch len(contents) {
+	case 0:
+		return &TextNode{}
+	case 1:
+		return &TextNode{Value: contents[0]}
+	default:
+		m := &MultiNode{Contents: make([]Node, 0, len(contents))}
+		for _, c := range contents {
+			m.Contents = append(m.Contents, &TextNode{Value: c})
+		}
+		return m
+	}
+}
+
+func (t *TextNode) Apply(n Node) error {
+	switch n := n.(type) {
+	case *ElementNode:
+		n.Contents = append(n.Contents, t)
+	case *MultiNode:
+		n.Contents = append(n.Contents, t)
+	default:
+		return fmt.Errorf("TextNode can only be applied to ElementNode or MultiNode, got %v", n)
+	}
+	return nil
+}
+
 func (t *TextNode) String() string {
 	return fmt.Sprintf("&TextNode{value=%v, width=%d}", t.Value, t.Width)
 }

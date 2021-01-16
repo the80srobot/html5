@@ -1,6 +1,9 @@
 package html
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // ElementNode represents an HTML element, like <p>.
 type ElementNode struct {
@@ -10,6 +13,30 @@ type ElementNode struct {
 	IndentStyle         IndentStyle
 	SelfClosing         bool
 	XMLStyleSelfClosing bool
+}
+
+type Content interface {
+	Apply(n Node) error
+}
+
+func Element(name string, contents ...Content) *ElementNode {
+	e := &ElementNode{Name: name}
+	for _, c := range contents {
+		c.Apply(e)
+	}
+	return e
+}
+
+func (e *ElementNode) Apply(n Node) error {
+	switch n := n.(type) {
+	case *ElementNode:
+		n.Contents = append(n.Contents, e)
+	case *MultiNode:
+		n.Contents = append(n.Contents, e)
+	default:
+		return fmt.Errorf("ElementNode can only be applied to ElementNode or MultiNode, got %v", n)
+	}
+	return nil
 }
 
 func (e *ElementNode) deduplicateAttributes() {

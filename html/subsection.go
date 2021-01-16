@@ -1,6 +1,7 @@
 package html
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/the80srobot/html5/bindings"
@@ -14,6 +15,18 @@ import (
 type SubsectionNode struct {
 	Prototype Node
 	Name      string
+}
+
+func (ns *SubsectionNode) Apply(n Node) error {
+	switch n := n.(type) {
+	case *ElementNode:
+		n.Contents = append(n.Contents, ns)
+	case *MultiNode:
+		n.Contents = append(n.Contents, ns)
+	default:
+		return fmt.Errorf("SubsectionNode can only be applied to ElementNode or MultiNode, %v", n)
+	}
+	return nil
 }
 
 func (ns *SubsectionNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {

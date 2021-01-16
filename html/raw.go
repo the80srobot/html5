@@ -13,6 +13,18 @@ type RawNode struct {
 	HTML Value
 }
 
+func (r *RawNode) Apply(n Node) error {
+	switch n := n.(type) {
+	case *ElementNode:
+		n.Contents = append(n.Contents, r)
+	case *MultiNode:
+		n.Contents = append(n.Contents, r)
+	default:
+		return fmt.Errorf("RawNode can only be applied to ElementNode or MultiNode, got %v", n)
+	}
+	return nil
+}
+
 func (r *RawNode) compile(tc *templateCompiler, _ int, _ *CompileOptions) error {
 	switch v := r.HTML.(type) {
 	case safe.String:
