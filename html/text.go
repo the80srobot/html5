@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"reflect"
+	"strings"
 
 	"github.com/the80srobot/html5/bindings"
+	"github.com/the80srobot/html5/safe"
 )
 
 type TextNode struct {
@@ -18,7 +21,20 @@ func (t *TextNode) String() string {
 }
 
 func (t *TextNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
-	return appendText(tc, depth, t, opts.Indent)
+	switch v := t.Value.(type) {
+	case safe.String:
+		s, err := safe.Check(v, safe.TextSafe)
+		if err != nil {
+			return err
+		}
+		return fprintBlockText(tc, depth, t.Width, opts.Indent, strings.NewReader(s))
+	case bindings.Var:
+		v = tc.bindings.Attach(v, safe.TextSafe)
+		tc.appendChunk(textBindingChunk{TextNode: *t, depth: depth, indent: opts.Indent, binding: v})
+		return nil
+	default:
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
+	}
 }
 
 type textBindingChunk struct {

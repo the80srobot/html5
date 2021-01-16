@@ -2,7 +2,9 @@ package html
 
 import (
 	"fmt"
+	"reflect"
 
+	"github.com/the80srobot/html5/bindings"
 	"github.com/the80srobot/html5/safe"
 )
 
@@ -18,6 +20,35 @@ func (a *Attribute) Apply(n Node) error {
 	}
 	e.Attributes = append(e.Attributes, *a)
 	return nil
+}
+
+func appendAttribute(tc *templateCompiler, a *Attribute) error {
+	if _, err := fmt.Fprintf(tc, " %s=\"", a.Name); err != nil {
+		return err
+	}
+
+	// Different attributes require different levels of trust (e.g. href
+	// contains URLs).
+	reqTrust, ok := requiredTrustPerAttribute[a.Name]
+	if !ok {
+		reqTrust = safe.FullyTrusted
+	}
+
+	switch v := a.Value.(type) {
+	case safe.String:
+		s, err := safe.Check(v, reqTrust)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(tc, "%s\"", s)
+		return err
+	case bindings.Var:
+		tc.appendVar(v, reqTrust)
+		_, err := fmt.Fprint(tc, "\"")
+		return err
+	default:
+		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
+	}
 }
 
 // Lists the required trust level for the content of known HTML attributes. If

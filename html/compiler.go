@@ -3,8 +3,6 @@ package html
 import (
 	"bytes"
 	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/the80srobot/html5/bindings"
 	"github.com/the80srobot/html5/safe"
@@ -119,50 +117,4 @@ func appendTag(tc *templateCompiler, name string, style tagStyle, attributes ...
 
 	_, err := fmt.Fprint(tc, ">")
 	return err
-}
-
-func appendAttribute(tc *templateCompiler, a *Attribute) error {
-	if _, err := fmt.Fprintf(tc, " %s=\"", a.Name); err != nil {
-		return err
-	}
-
-	// Different attributes require different levels of trust (e.g. href
-	// contains URLs).
-	reqTrust, ok := requiredTrustPerAttribute[a.Name]
-	if !ok {
-		reqTrust = safe.FullyTrusted
-	}
-
-	switch v := a.Value.(type) {
-	case safe.String:
-		s, err := safe.Check(v, reqTrust)
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprintf(tc, "%s\"", s)
-		return err
-	case bindings.Var:
-		tc.appendVar(v, reqTrust)
-		_, err := fmt.Fprint(tc, "\"")
-		return err
-	default:
-		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
-	}
-}
-
-func appendText(tc *templateCompiler, depth int, text *TextNode, indent string) error {
-	switch v := text.Value.(type) {
-	case safe.String:
-		s, err := safe.Check(v, safe.TextSafe)
-		if err != nil {
-			return err
-		}
-		return fprintBlockText(tc, depth, text.Width, indent, strings.NewReader(s))
-	case bindings.Var:
-		v = tc.bindings.Attach(v, safe.TextSafe)
-		tc.appendChunk(textBindingChunk{TextNode: *text, depth: depth, indent: indent, binding: v})
-		return nil
-	default:
-		return fmt.Errorf("value must be safe.String or *bindings.Var, %v (%v) is neither", v, reflect.TypeOf(v))
-	}
 }
