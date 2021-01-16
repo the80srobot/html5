@@ -2,12 +2,15 @@ package safe
 
 import "fmt"
 
-type constantString string
-
 type String interface {
+	notImplementable
 	fmt.Stringer
 	Check(required TrustLevel) bool
 }
+
+type constantString string
+
+func (s constantString) safestring() {}
 
 func Const(s constantString) String {
 	return s
@@ -22,6 +25,8 @@ func (s constantString) String() string {
 }
 
 type UntrustedString string
+
+func (s UntrustedString) safestring() {}
 
 func (r UntrustedString) String() string {
 	return string(r)
@@ -39,6 +44,8 @@ func (UntrustedString) Check(required TrustLevel) bool {
 type URL struct {
 	s string
 }
+
+func (s URL) safestring() {}
 
 func (u URL) String() string {
 	return u.s
@@ -66,6 +73,8 @@ type Attribute struct {
 	s string
 }
 
+func (s Attribute) safestring() {}
+
 func (a Attribute) String() string {
 	return a.s
 }
@@ -91,6 +100,8 @@ func EscapeAttribute(s string) Attribute {
 type HTML struct {
 	s string
 }
+
+func (s HTML) safestring() {}
 
 func (h HTML) String() string {
 	return h.s
@@ -118,6 +129,8 @@ type Text struct {
 	s string
 }
 
+func (s Text) safestring() {}
+
 func (t Text) String() string {
 	return t.s
 }
@@ -138,4 +151,8 @@ func EscapeText(s string) Text {
 	}
 
 	return Text{t}
+}
+
+type notImplementable interface {
+	safestring()
 }

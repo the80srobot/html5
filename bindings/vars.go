@@ -23,6 +23,10 @@ func (v Var) String() string {
 	return fmt.Sprintf("Var{%d, %q, %v}", v.idx, v.name, v.level)
 }
 
+func (v Var) Check(required safe.TrustLevel) bool {
+	return true
+}
+
 var ZeroVar = Var{}
 
 func Declare(name string) Var {
