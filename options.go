@@ -1,51 +1,39 @@
 package html5
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/the80srobot/html5/html"
+type IndentStyle int16
+
+const (
+	Inline IndentStyle = iota
+	Block
 )
 
-type Option interface {
-	Apply(n html.Node) error
-}
-
-type funcOption func(n html.Node) error
-
-func (f funcOption) Apply(n html.Node) error {
-	return f(n)
-}
-
-func Indent(is html.IndentStyle) Option {
-	f := func(n html.Node) error {
-		switch n := n.(type) {
-		case *html.ElementNode:
-			n.IndentStyle = is
-		default:
-			return fmt.Errorf("Indent option cannot be applied to node %v", n)
-		}
-		return nil
+var (
+	Compact = CompileOptions{
+		Indent:  "  ",
+		Compact: true,
 	}
-	return funcOption(f)
+
+	Tidy = CompileOptions{
+		Indent:  "  ",
+		Compact: false,
+	}
+
+	Debug = CompileOptions{
+		Indent:               "  ",
+		Compact:              false,
+		SeparateStaticChunks: true,
+	}
+)
+
+type CompileOptions struct {
+	Indent               string
+	Compact              bool
+	SeparateStaticChunks bool
+	TextWidth            int
 }
 
-func SelfClosing() Option {
-	f := func(n html.Node) error {
-		switch n := n.(type) {
-		case *html.ElementNode:
-			n.SelfClosing = true
-		default:
-			return fmt.Errorf("SelfClosing option cannot be applied to node %v", n)
-		}
-		return nil
-	}
-	return funcOption(f)
-}
-
-func applyOptions(n html.Node, opts ...Option) {
-	for _, opt := range opts {
-		if err := opt.Apply(n); err != nil {
-			panic(fmt.Sprintf("Invalid option (programmer error): %v", err))
-		}
-	}
+func (opts *CompileOptions) String() string {
+	return fmt.Sprintf("{Indent: %q, Compact: %v, SeparateStaticChunks: %v}", opts.Indent, opts.Compact, opts.SeparateStaticChunks)
 }
