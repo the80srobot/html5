@@ -9,6 +9,7 @@ import (
 )
 
 type Node interface {
+	Content
 	compile(tc *templateCompiler, depth int, opts *CompileOptions) error
 }
 

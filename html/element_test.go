@@ -24,13 +24,10 @@ func TestElementNode(t *testing.T) {
 	}{
 		{
 			comment: "paragraph",
-			input: &ElementNode{
-				IndentStyle: Block,
-				Name:        "p",
-				Attributes:  []Attribute{{Name: "id", Value: safe.Const("hello")}},
-				Contents: []Node{
-					&TextNode{Value: safe.Const("Hello, World!")},
-				}},
+			input: Element("p",
+				Indent(Block),
+				&Attribute{"id", safe.Const("hello")},
+				Text(safe.Const("Hello, World!"))),
 			opts: &opts,
 			output: `<p id="hello">
   Hello,
@@ -39,26 +36,10 @@ func TestElementNode(t *testing.T) {
 		},
 		{
 			comment: "block indent",
-			input: &ElementNode{
-				IndentStyle: Block,
-				Name:        "p",
-				Contents: []Node{
-					&ElementNode{
-						Name:        "span",
-						IndentStyle: Block,
-						Contents: []Node{
-							&TextNode{Value: safe.Const("Span")},
-						},
-					},
-					&ElementNode{
-						Name:        "span",
-						IndentStyle: Block,
-						Contents: []Node{
-							&TextNode{Value: safe.Const("Span")},
-						},
-					},
-				},
-			},
+			input: Element("p",
+				Indent(Block),
+				Element("span", Indent(Block), Text(safe.Const("Span"))),
+				Element("span", Indent(Block), Text(safe.Const("Span")))),
 			opts: &opts,
 			output: `<p>
   <span>
@@ -71,33 +52,24 @@ func TestElementNode(t *testing.T) {
 		},
 		{
 			comment: "multiple attributes",
-			input: &ElementNode{
-				IndentStyle: Inline,
-				Name:        "a",
-				Attributes: []Attribute{
-					{Name: "href", Value: safe.Const("#title_1")},
-					{Name: "rel", Value: safe.Const("nofollow")},
-					{Name: "target", Value: safe.Const("_blank")},
-				},
-				Contents: []Node{&TextNode{Value: safe.Const("Hello!")}},
-			},
+			input: Element("a",
+				Indent(Inline),
+				&Attribute{"href", safe.Const("#title_1")},
+				&Attribute{"rel", safe.Const("nofollow")},
+				&Attribute{"target", safe.Const("_blank")},
+				Text(safe.Const("Hello!"))),
 			opts:   &opts,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
 		},
 		{
 			comment: "bindings",
-			input: &ElementNode{
-				IndentStyle: Inline,
-				Name:        "a",
-				Attributes: []Attribute{
-					{Name: "href", Value: bindings.Declare("href")},
-					{Name: "rel", Value: bindings.Declare("rel")},
-					{Name: "target", Value: bindings.Declare("target")},
-				},
-				Contents: []Node{
-					&TextNode{Value: bindings.Declare("hello")},
-				},
-			},
+			input: Element("a",
+				Indent(Inline),
+				&Attribute{"href", bindings.Declare("href")},
+				&Attribute{"rel", bindings.Declare("rel")},
+				&Attribute{"target", bindings.Declare("target")},
+				Text(bindings.Declare("hello")),
+			),
 			values: []bindings.BindArg{
 				{Name: "href", Value: safe.Const("#title_1")},
 				{Name: "rel", Value: safe.Const("nofollow")},

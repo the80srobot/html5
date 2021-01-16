@@ -15,10 +15,6 @@ type ElementNode struct {
 	XMLStyleSelfClosing bool
 }
 
-type Content interface {
-	Apply(n Node) error
-}
-
 func Element(name string, contents ...Content) *ElementNode {
 	e := &ElementNode{Name: name}
 	for _, c := range contents {
