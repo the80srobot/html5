@@ -29,18 +29,6 @@ func Indent(is html.IndentStyle) Option {
 	return funcOption(f)
 }
 
-func LineWidth(width int) Option {
-	f := func(n html.Node) error {
-		t, ok := n.(*html.TextNode)
-		if !ok {
-			return fmt.Errorf("LineWidth option can only be applied to text nodes, got %v", n)
-		}
-		t.Width = width
-		return nil
-	}
-	return funcOption(f)
-}
-
 func SelfClosing() Option {
 	f := func(n html.Node) error {
 		switch n := n.(type) {

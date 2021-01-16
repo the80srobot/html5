@@ -25,8 +25,8 @@ func TestTextNode(t *testing.T) {
 		},
 		{
 			comment: "two lines static inline",
-			input:   &TextNode{Value: safe.Const("Hello, World!"), Width: 1},
-			opts:    &CompileOptions{},
+			input:   &TextNode{Value: safe.Const("Hello, World!")},
+			opts:    &CompileOptions{TextWidth: 1},
 			output:  "Hello,\nWorld!",
 		},
 		{
@@ -38,9 +38,9 @@ func TestTextNode(t *testing.T) {
 		},
 		{
 			comment: "block two lines",
-			input:   &TextNode{Value: safe.Const("Hello, World!"), Width: 1},
+			input:   &TextNode{Value: safe.Const("Hello, World!")},
 			depth:   1,
-			opts:    &CompileOptions{Indent: "  "},
+			opts:    &CompileOptions{Indent: "  ", TextWidth: 1},
 			output:  "Hello,\n  World!",
 		},
 		{

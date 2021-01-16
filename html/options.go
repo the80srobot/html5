@@ -31,6 +31,7 @@ type CompileOptions struct {
 	Indent               string
 	Compact              bool
 	SeparateStaticChunks bool
+	TextWidth            int
 }
 
 func (opts *CompileOptions) String() string {

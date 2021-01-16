@@ -11,6 +11,9 @@ import (
 )
 
 func TestElementNode(t *testing.T) {
+	opts := Tidy
+	opts.TextWidth = 1 // Force line breaks after every word.
+
 	for _, tc := range []struct {
 		comment string
 		input   *ElementNode
@@ -26,9 +29,9 @@ func TestElementNode(t *testing.T) {
 				Name:        "p",
 				Attributes:  []Attribute{{Name: "id", Value: safe.Const("hello")}},
 				Contents: []Node{
-					&TextNode{Value: safe.Const("Hello, World!"), Width: 1},
+					&TextNode{Value: safe.Const("Hello, World!")},
 				}},
-			opts: &Tidy,
+			opts: &opts,
 			output: `<p id="hello">
   Hello,
   World!
@@ -56,7 +59,7 @@ func TestElementNode(t *testing.T) {
 					},
 				},
 			},
-			opts: &Tidy,
+			opts: &opts,
 			output: `<p>
   <span>
     Span
@@ -78,7 +81,7 @@ func TestElementNode(t *testing.T) {
 				},
 				Contents: []Node{&TextNode{Value: safe.Const("Hello!")}},
 			},
-			opts:   &Tidy,
+			opts:   &opts,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
 		},
 		{
@@ -101,7 +104,7 @@ func TestElementNode(t *testing.T) {
 				{Name: "target", Value: safe.Const("_blank")},
 				{Name: "hello", Value: safe.Const("Hello!")},
 			},
-			opts:   &Tidy,
+			opts:   &opts,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
 		},
 	} {
