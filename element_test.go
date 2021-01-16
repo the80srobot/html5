@@ -24,8 +24,7 @@ func TestElementNode(t *testing.T) {
 		{
 			comment: "paragraph",
 			input: Element("p",
-				Indent(Block),
-				&AttributeNode{"id", safe.Const("hello")},
+				Attribute("id", safe.Const("hello")),
 				Text(safe.Const("Hello, World!"))),
 			opts: &opts,
 			output: `<p id="hello">
@@ -36,7 +35,6 @@ func TestElementNode(t *testing.T) {
 		{
 			comment: "block indent",
 			input: Element("p",
-				Indent(Block),
 				Element("span", Indent(Block), Text(safe.Const("Span"))),
 				Element("span", Indent(Block), Text(safe.Const("Span")))),
 			opts: &opts,
@@ -52,10 +50,9 @@ func TestElementNode(t *testing.T) {
 		{
 			comment: "multiple attributes",
 			input: Element("a",
-				Indent(Inline),
-				&AttributeNode{"href", safe.Const("#title_1")},
-				&AttributeNode{"rel", safe.Const("nofollow")},
-				&AttributeNode{"target", safe.Const("_blank")},
+				Attribute("href", safe.Const("#title_1")),
+				Attribute("rel", safe.Const("nofollow")),
+				Attribute("target", safe.Const("_blank")),
 				Text(safe.Const("Hello!"))),
 			opts:   &opts,
 			output: "<a href=\"#title_1\" rel=\"nofollow\" target=\"_blank\">Hello!</a>",
@@ -63,10 +60,9 @@ func TestElementNode(t *testing.T) {
 		{
 			comment: "bindings",
 			input: Element("a",
-				Indent(Inline),
-				&AttributeNode{"href", bindings.Declare("href")},
-				&AttributeNode{"rel", bindings.Declare("rel")},
-				&AttributeNode{"target", bindings.Declare("target")},
+				Attribute("href", bindings.Declare("href")),
+				Attribute("rel", bindings.Declare("rel")),
+				Attribute("target", bindings.Declare("target")),
 				Text(bindings.Declare("hello")),
 			),
 			values: []bindings.BindArg{
