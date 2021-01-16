@@ -18,6 +18,18 @@ type Template struct {
 	chunks   []chunk
 }
 
+func GenerateHTML(w io.Writer, t *Template, values ...bindings.BindArg) error {
+	vm, err := t.Bindings.Bind()
+	if err != nil {
+		return err
+	}
+	if err := bindings.Bind(vm, values...); err != nil {
+		return err
+	}
+
+	return t.GenerateHTML(w, vm)
+}
+
 func (t *Template) GenerateHTML(w io.Writer, vm *bindings.ValueMap) error {
 	for i, chunk := range t.chunks {
 		if err := chunk.build(w, vm); err != nil {
