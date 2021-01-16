@@ -94,7 +94,7 @@ const (
 	tagSelfClose
 )
 
-func appendTag(tc *templateCompiler, name string, style tagStyle, attributes ...Attribute) error {
+func appendTag(tc *templateCompiler, name string, style tagStyle, attributes ...AttributeNode) error {
 	if style == tagClose {
 		_, err := fmt.Fprintf(tc, "</%s>", name)
 		return err

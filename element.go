@@ -8,7 +8,7 @@ import (
 // ElementNode represents an HTML element, like <p>.
 type ElementNode struct {
 	Name                string
-	Attributes          []Attribute
+	Attributes          []AttributeNode
 	Contents            []Node
 	IndentStyle         IndentStyle
 	SelfClosing         bool
@@ -36,7 +36,7 @@ func (e *ElementNode) Apply(n Node) error {
 }
 
 func (e *ElementNode) deduplicateAttributes() {
-	var attrs []Attribute
+	var attrs []AttributeNode
 	seen := make(map[string]struct{}, len(e.Attributes))
 	for i := len(e.Attributes) - 1; i >= 0; i-- {
 		if _, ok := seen[e.Attributes[i].Name]; ok {

@@ -49,6 +49,14 @@ func Compile(n Node, depth int, m *bindings.Map, opts *CompileOptions) (*Templat
 	return &Template{chunks: tc.chunks, Bindings: tc.bindings}, nil
 }
 
+func MustCompile(n Node, depth int, m *bindings.Map, opts *CompileOptions) *Template {
+	t, err := Compile(n, depth, m, opts)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 type chunk interface {
 	build(w io.Writer, vm *bindings.ValueMap) error
 }

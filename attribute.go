@@ -8,13 +8,17 @@ import (
 	"github.com/the80srobot/html5/safe"
 )
 
-type Attribute struct {
+type AttributeNode struct {
 	Name  string
 	Value Value
 }
 
+func Attribute(name string, value Value) *AttributeNode {
+	return &AttributeNode{name, value}
+}
+
 // Apply will insert the attribute into the node, which must be ElementNode.
-func (a *Attribute) Apply(n Node) error {
+func (a *AttributeNode) Apply(n Node) error {
 	e, ok := n.(*ElementNode)
 	if !ok {
 		return fmt.Errorf("attributes must be applied to elements, got node %v", n)
@@ -23,7 +27,7 @@ func (a *Attribute) Apply(n Node) error {
 	return nil
 }
 
-func appendAttribute(tc *templateCompiler, a *Attribute) error {
+func appendAttribute(tc *templateCompiler, a *AttributeNode) error {
 	if _, err := fmt.Fprintf(tc, " %s=\"", a.Name); err != nil {
 		return err
 	}
