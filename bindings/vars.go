@@ -23,12 +23,19 @@ func (v Var) String() string {
 	return fmt.Sprintf("Var{%d, %q, %v}", v.idx, v.name, v.level)
 }
 
+// Check whether this Var's trust level can satisfy the required trust level.
 func (v Var) Check(required safe.TrustLevel) bool {
-	return true
+	return v.level == required ||
+		v.level == safe.FullyTrusted ||
+		required == safe.Untrusted ||
+		(v.level == safe.HTMLSafe && required == safe.TextSafe)
 }
 
+// ZeroVar is a an empty Var.
 var ZeroVar = Var{}
 
+// Declare an unnatached Var as a placeholder. Unnatached Vars cannot be used
+// with ValueMaps, but can be converted to attached Vars using Map.Attach.
 func Declare(name string) Var {
 	if name == "" {
 		panic("Var name cannot be empty")
@@ -44,23 +51,34 @@ func (v Var) tryBind(ss safe.String) (Value, error) {
 	return Value{debugOnlyName: v.name, idx: v.idx, value: s, checkOnlyContainingMap: v.checkOnlyAttachedMap}, nil
 }
 
+// Bind returns a Value created by binding the provided string to this Var.
 func (v Var) Bind(ss safe.String) Value {
 	value, err := v.tryBind(ss)
 	value.setError = err
 	return value
 }
 
+// Attached returns whether this Var is attached to a Map.
 func (v Var) Attached() bool {
 	return v.checkOnlyAttachedMap != nil
 }
 
 type constString string
 
+// BindConst is like Bind, but bypasses the trust level check. To guarantee
+// safety, BindConst only accepts string literals.
 func (v Var) BindConst(value constString) Value {
 	return Value{debugOnlyName: v.name, idx: v.idx, value: string(value), checkOnlyContainingMap: v.checkOnlyAttachedMap}
 }
 
+// Map is a collection of Vars and nested Maps. Each html5.Template uses a
+// single root Map to hold all the dynamic elements of the page, and their
+// requisite levels of trust.
+//
+// Maps are "instantiated" into ValueMaps, which specify a set of values for the
+// Vars and nested Maps in the Map.
 type Map struct {
+	// If true, then the Map won't accept Bind arguments for non-existent Vars.
 	Strict bool
 
 	idxInParent  int
@@ -74,6 +92,8 @@ type Map struct {
 	checkOnlyParentMap *Map
 }
 
+// Root returns whether this Map is the top-most Map in the hierarchy, or a
+// nested Map.
 func (m *Map) Root() bool {
 	return m.checkOnlyParentMap == nil
 }
@@ -84,6 +104,7 @@ func (m *Map) String() string {
 	return sb.String()
 }
 
+// Declare a Var with the given name, at the given trust level.
 func (m *Map) Declare(name string, level safe.TrustLevel) Var {
 	if name == "" {
 		panic("Var name cannot be empty")
@@ -105,10 +126,15 @@ func (m *Map) Declare(name string, level safe.TrustLevel) Var {
 	return m.vars[idx]
 }
 
+// Attach returns a copy of the provided free Var that's associated to this Map.
 func (m *Map) Attach(v Var, level safe.TrustLevel) Var {
 	return m.Declare(v.name, safe.Max(v.level, level))
 }
 
+// Nest creates a nested Map with the given name and returns it. Nested Maps can
+// be used to create ValueStreams, which specify repeated sections in the HTML
+// page. (For example, comments under an article.) Maps can be nested to
+// arbitrary depth.
 func (m *Map) Nest(name string) *Map {
 	idx, ok := m.mapsByName[name]
 	if ok {
@@ -125,6 +151,8 @@ func (m *Map) Nest(name string) *Map {
 	return m.maps[idx]
 }
 
+// Bind creates a ValueMap and sets the provided values, if any. The Values must
+// be associated to Vars associated to this Map, otherwise Bind will panic.
 func (m *Map) Bind(values ...Value) (*ValueMap, error) {
 	vm := &ValueMap{
 		Vars: m,
@@ -143,6 +171,7 @@ func (m *Map) Bind(values ...Value) (*ValueMap, error) {
 	return vm, nil
 }
 
+// MustBind is like Bind, but panics on error.
 func (m *Map) MustBind(values ...Value) *ValueMap {
 	vm, err := m.Bind(values...)
 	if err != nil {
@@ -151,6 +180,8 @@ func (m *Map) MustBind(values ...Value) *ValueMap {
 	return vm
 }
 
+// BindStream binds the provided ValueStream to this Map, returning a Value that
+// can be set on a parent ValueMap.
 func (m *Map) BindStream(stream ValueStream) Value {
 	return Value{
 		idx:                    m.idxInParent,
@@ -160,10 +191,13 @@ func (m *Map) BindStream(stream ValueStream) Value {
 	}
 }
 
+// BindSeries is like BindStream, but constructs a ValueStream for the caller.
 func (m *Map) BindSeries(maps ...*ValueMap) Value {
 	return m.BindStream(ValueSeries(maps))
 }
 
+// DebugName returns a name of this map, or "root" if it isn't nested. Used for
+// debugging only.
 func (m *Map) DebugName() string {
 	if m.Root() {
 		return "root"
@@ -171,6 +205,7 @@ func (m *Map) DebugName() string {
 	return m.nameInParent
 }
 
+// DebugDump writes a detailed description of this Map to the writer.
 func (m *Map) DebugDump(w io.Writer, depth int) {
 	indent := strings.Repeat("\t", depth)
 

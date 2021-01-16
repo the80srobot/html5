@@ -7,8 +7,12 @@ import (
 	"strings"
 )
 
+// ErrUndefined is returned when the ValueMap cannot set a value, because the
+// associated Var or nested Map aren't declared in ValueMap.Vars.
 var ErrUndefined = errors.New("undefined")
 
+// Value specifies a single value for the ValueMap - it can be either a string
+// value of a Var, or a ValueStream value of a nested Map.
 type Value struct {
 	idx                    int
 	value                  string
@@ -66,6 +70,8 @@ func (vm *ValueMap) setValue(v Value) error {
 	return nil
 }
 
+// Set the Value on this ValueMap. The Value must be associated to a Var or
+// nested Map declared in this ValueMap.Vars, otherwise Set will panic.
 func (vm *ValueMap) Set(v Value) error {
 	if v.checkOnlyContainingMap != vm.Vars {
 		panic(fmt.Sprintf("%v is bound to the map %q, this ValueMap is instantiated from %q (programmer error - variable used in wrong context)", v, v.checkOnlyContainingMap.DebugName(), vm.Vars.DebugName()))
@@ -79,6 +85,10 @@ func (vm *ValueMap) Set(v Value) error {
 	return vm.setValue(v)
 }
 
+// GetString returns the string value for the Var, which must be associated to
+// this ValueMap.Vars, otherwise GetString will panic.
+//
+// GetString doesn't distinguish between empty strings and missing values.
 func (vm *ValueMap) GetString(v Var) string {
 	if len(vm.values) <= v.idx {
 		return ""
@@ -94,6 +104,8 @@ func (vm *ValueMap) GetString(v Var) string {
 	return vm.values[v.idx]
 }
 
+// GetStream returns the ValueStream associated with the Map. The Map must be a
+// nested member of this ValueMap.Vars, otherwise the result will be bogus.
 func (vm *ValueMap) GetStream(m *Map) ValueStream {
 	if len(vm.streams) <= vm.Vars.idxInParent {
 		return nil
@@ -107,6 +119,8 @@ func (vm *ValueMap) String() string {
 	return sb.String()
 }
 
+// DebugDump writes a verbose description of this ValueMap and its values to the
+// provided writer. Depth can be used to indent the output with tabs.
 func (vm *ValueMap) DebugDump(w io.Writer, depth int) {
 	indent := strings.Repeat("\t", depth)
 
