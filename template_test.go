@@ -8,11 +8,11 @@ import (
 	"github.com/the80srobot/html5/safe"
 )
 
-func mustGenerateHTML(t testing.TB, n Node, depth int, opts *CompileOptions, values []bindings.BindArg) string {
+func mustGenerateHTML(t testing.TB, n Node, opts *CompileOptions, values []bindings.BindArg) string {
 	t.Helper()
 	var sb strings.Builder
 	var m bindings.Map
-	tmpl, err := Compile(n, depth, &m, opts)
+	tmpl, err := Compile(n, &m, opts)
 	if err != nil {
 		t.Fatalf("Compile: %v", err)
 	}

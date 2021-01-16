@@ -32,6 +32,7 @@ type CompileOptions struct {
 	Compact              bool
 	SeparateStaticChunks bool
 	TextWidth            int
+	RootDepth            int
 }
 
 func (opts *CompileOptions) String() string {

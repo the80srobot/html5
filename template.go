@@ -39,18 +39,18 @@ func (t *Template) String() string {
 	return sb.String()
 }
 
-func Compile(n Node, depth int, m *bindings.Map, opts *CompileOptions) (*Template, error) {
+func Compile(n Node, m *bindings.Map, opts *CompileOptions) (*Template, error) {
 	tc := &templateCompiler{bindings: m}
 	tc.separateChunks = opts.SeparateStaticChunks
-	if err := n.compile(tc, depth, opts); err != nil {
+	if err := n.compile(tc, opts.RootDepth, opts); err != nil {
 		return nil, err
 	}
 	tc.flush()
 	return &Template{chunks: tc.chunks, Bindings: tc.bindings}, nil
 }
 
-func MustCompile(n Node, depth int, m *bindings.Map, opts *CompileOptions) *Template {
-	t, err := Compile(n, depth, m, opts)
+func MustCompile(n Node, m *bindings.Map, opts *CompileOptions) *Template {
+	t, err := Compile(n, m, opts)
 	if err != nil {
 		panic(err)
 	}

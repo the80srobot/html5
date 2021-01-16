@@ -31,7 +31,9 @@ func (ns *SubsectionNode) Apply(n Node) error {
 
 func (ns *SubsectionNode) compile(tc *templateCompiler, depth int, opts *CompileOptions) error {
 	m := tc.bindings.Nest(ns.Name)
-	t, err := Compile(ns.Prototype, depth, m, opts)
+	subsectionOpts := *opts
+	subsectionOpts.RootDepth = depth
+	t, err := Compile(ns.Prototype, m, &subsectionOpts)
 	if err != nil {
 		return err
 	}

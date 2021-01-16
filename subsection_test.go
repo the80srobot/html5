@@ -14,7 +14,6 @@ func TestSubsection(t *testing.T) {
 		input   *SubsectionNode
 		opts    *CompileOptions
 		values  []bindings.BindArg
-		depth   int
 		output  string
 	}{
 		{
@@ -40,7 +39,6 @@ func TestSubsection(t *testing.T) {
 					},
 				},
 			},
-			depth:  0,
 			output: "John says Hello!\nJane says Howdy!\n",
 		},
 		{
@@ -80,13 +78,12 @@ func TestSubsection(t *testing.T) {
 					},
 				},
 			},
-			depth:  0,
 			output: "John says Hello!Love!Good to see you!\nJane says Howdy!\n",
 		},
 	} {
 		t.Run(tc.comment, func(t *testing.T) {
-			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.depth, tc.opts, tc.values)); diff != "" {
-				t.Errorf("GenerateHTML(%v, %v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.depth, tc.opts, tc.values, diff)
+			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.opts, tc.values)); diff != "" {
+				t.Errorf("GenerateHTML(%v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.opts, tc.values, diff)
 			}
 		})
 	}

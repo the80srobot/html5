@@ -37,12 +37,14 @@ func (sn *SwitchNode) compile(tc *templateCompiler, depth int, opts *CompileOpti
 		templates:  make([]*Template, len(sn.Cases)+1),
 	}
 
+	nestedOpts := *opts
+	nestedOpts.RootDepth = depth
 	for i, c := range sn.Cases {
 		sc.conditions[i] = c.Condition
 		if c.Output == nil {
 			continue
 		}
-		t, err := Compile(c.Output, depth, tc.bindings, opts)
+		t, err := Compile(c.Output, tc.bindings, &nestedOpts)
 		if err != nil {
 			return fmt.Errorf("compiling case %d/%d: %w", i+1, len(sn.Cases), err)
 		}
@@ -50,7 +52,7 @@ func (sn *SwitchNode) compile(tc *templateCompiler, depth int, opts *CompileOpti
 	}
 
 	if sn.Default != nil {
-		t, err := Compile(sn.Default, depth, tc.bindings, opts)
+		t, err := Compile(sn.Default, tc.bindings, &nestedOpts)
 		if err != nil {
 			return fmt.Errorf("compiling default case: %w", err)
 		}

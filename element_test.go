@@ -19,7 +19,6 @@ func TestElementNode(t *testing.T) {
 		input   *ElementNode
 		opts    *CompileOptions
 		values  []bindings.BindArg
-		depth   int
 		output  string
 	}{
 		{
@@ -84,8 +83,8 @@ func TestElementNode(t *testing.T) {
 			return strings.Split(s, "\n")
 		})
 		t.Run(tc.comment, func(t *testing.T) {
-			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.depth, tc.opts, tc.values), opt); diff != "" {
-				t.Errorf("GenerateHTML(%v, %v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.depth, tc.opts, tc.values, diff)
+			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.opts, tc.values), opt); diff != "" {
+				t.Errorf("GenerateHTML(%v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.opts, tc.values, diff)
 			}
 		})
 	}

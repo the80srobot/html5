@@ -14,7 +14,6 @@ func TestTextNode(t *testing.T) {
 		input   *TextNode
 		opts    *CompileOptions
 		values  []bindings.BindArg
-		depth   int
 		output  string
 	}{
 		{
@@ -32,15 +31,13 @@ func TestTextNode(t *testing.T) {
 		{
 			comment: "block one line",
 			input:   &TextNode{Value: safe.Const("Hello, World!")},
-			depth:   1,
-			opts:    &CompileOptions{Indent: "  "},
+			opts:    &CompileOptions{Indent: "  ", RootDepth: 1},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "block two lines",
 			input:   &TextNode{Value: safe.Const("Hello, World!")},
-			depth:   1,
-			opts:    &CompileOptions{Indent: "  ", TextWidth: 1},
+			opts:    &CompileOptions{Indent: "  ", TextWidth: 1, RootDepth: 1},
 			output:  "Hello,\n  World!",
 		},
 		{
@@ -59,8 +56,8 @@ func TestTextNode(t *testing.T) {
 		},
 	} {
 		t.Run(tc.comment, func(t *testing.T) {
-			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.depth, tc.opts, tc.values)); diff != "" {
-				t.Errorf("GenerateHTML(%v, %v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.depth, tc.opts, tc.values, diff)
+			if diff := cmp.Diff(tc.output, mustGenerateHTML(t, tc.input, tc.opts, tc.values)); diff != "" {
+				t.Errorf("GenerateHTML(%v, %v, %v)\n => (-)wanted vs (+)got:\n%s", tc.input, tc.opts, tc.values, diff)
 			}
 		})
 	}
