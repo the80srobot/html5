@@ -2,6 +2,9 @@ package bindings
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"strings"
 
 	"github.com/the80srobot/html5/safe"
 )
@@ -39,24 +42,85 @@ func Bind(vm *ValueMap, args ...BindArg) error {
 }
 
 // BindArg specifies a single string or nested map to set on a ValueMap. Each
-// BindArg must specify either a string or a ValueStream (as more BindArgs).
+// BindArg must specify either a string or a ValueStream.
 //
-// If a BindArg specifies a string, then Var and Value must be set.
-// TrustRequirement may be left at Default, or set to a new requirement, in
-// which case the underlying Map will increase the required trust for this var
-// to safe.Max of the previous trust and the new value.
+// To specify a string, set Value to a non-nil safe.String and Var to a variable
+// on which it should be set. If Var is no attached, it will become attached to
+// the ValueMap passed to Bind.
 //
-// If a BindArg specifies a nested ValueStream, then NestedMap must be set to
-// the Map, and NestedRows must be set to a slice of slices of BindArgs, such
-// that a nested ValueMap can be built recursively from each row.
+// To specify a ValueStream, set NestedRows such that each slice of BindArgs
+// (each row) contains valid arguments for Bind on the NestedMap. Set NestedMap
+// to the corresponding Map.
+//
+// As a convenience, if Var or NestedMap are not available, but Name is a
+// non-empty string, then Bind will lookup or declare the Var or Map
+// automatically. This is slower than providing the Var or NestedMap.
+//
+// Optionally, if TrustRequirement is specified, it will be treated as an extra
+// requirement on top of the Var's requirement, and Var will be promoted to
+// safe.Max of the two.
 type BindArg struct {
-	Name             string
-	TrustRequirement safe.TrustLevel
-	Var              Var
-	NestedMap        *Map
+	// Fields to specify a safe string value.
+	Var   Var
+	Value safe.String
 
-	Value      safe.String
+	// Fields to specify a nested ValueStream.
+	NestedMap  *Map
 	NestedRows [][]BindArg
+
+	// Optional: if Var/NestedMap are not specified, lookup or declare using
+	// this name.
+	Name string
+	// Optional: if specified, Var will be promoted to safe.Max of this and its
+	// existing trust requirement.
+	TrustRequirement safe.TrustLevel
+}
+
+func (a BindArg) String() string {
+	var sb strings.Builder
+
+	sb.WriteString("BindArg{")
+	a.describe(&sb)
+	sb.WriteString("}")
+	return sb.String()
+}
+
+func (a BindArg) describe(w io.Writer) {
+	if a.Name != "" {
+		fmt.Fprintf(w, "named %q ", a.Name)
+	}
+
+	if a.Value != nil {
+		fmt.Fprintf(w, "var=%v, string=%v, req=%v ", a.Var, a.Value, a.TrustRequirement)
+	}
+
+	if a.NestedMap != nil {
+		fmt.Fprintf(w, "map named %q, idx=%d, ", a.NestedMap.DebugName(), a.NestedMap.idxInParent)
+	}
+
+	if a.NestedRows != nil {
+		fmt.Fprintf(w, "ValueStream of %d rows", len(a.NestedRows))
+	}
+}
+
+// DebugDump writes a verbose description of the BindArg to the writer. Depth
+// can be used to indent output with tabs.
+func (a BindArg) DebugDump(w io.Writer, depth int) {
+	indent := strings.Repeat("\t", depth)
+	io.WriteString(w, indent)
+	io.WriteString(w, "BindArg{")
+	a.describe(w)
+
+	for i, row := range a.NestedRows {
+		fmt.Fprintf(w, "\n%s\trow %d/%d: ", indent, i+1, len(a.NestedRows))
+		for _, col := range row {
+			col.DebugDump(w, depth+1)
+		}
+	}
+	if len(a.NestedRows) != 0 {
+		fmt.Fprintf(w, "\n%s", indent)
+	}
+	io.WriteString(w, "}")
 }
 
 func bindSubsection(vm *ValueMap, arg BindArg) error {
