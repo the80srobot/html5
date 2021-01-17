@@ -158,3 +158,18 @@ func bindString(vm *ValueMap, arg BindArg) error {
 
 	return vm.Set(v.Bind(arg.Value))
 }
+
+// BindArgs is a slice of BindArg values. Its only advantage over a plain slice
+// is that it knows how to DebugDump itself, and so can be passed to functions
+// that accept DebugDumper.
+type BindArgs []BindArg
+
+// DebugDump writes a verbose description of the BindArgs to the writer.
+func (a BindArgs) DebugDump(w io.Writer, depth int) {
+	indent := strings.Repeat("  ", depth)
+	for i, v := range a {
+		fmt.Fprintf(w, "%sarg %d/%d: ", indent, i+1, len(a))
+		v.DebugDump(w, depth)
+		io.WriteString(w, "\n")
+	}
+}
