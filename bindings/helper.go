@@ -112,15 +112,16 @@ func (a BindArg) DebugDump(w io.Writer, depth int) {
 	a.describe(w)
 
 	for i, row := range a.NestedRows {
-		fmt.Fprintf(w, "\n%s\trow %d/%d:\n", indent, i+1, len(a.NestedRows))
+		fmt.Fprintf(w, "\n%s  row %d/%d:\n", indent, i+1, len(a.NestedRows))
 		for _, col := range row {
 			col.DebugDump(w, depth+2)
 		}
+		io.WriteString(w, "\n")
 	}
 	if len(a.NestedRows) != 0 {
 		fmt.Fprintf(w, "\n%s", indent)
 	}
-	io.WriteString(w, "}\n")
+	io.WriteString(w, "}")
 }
 
 func bindSubsection(vm *ValueMap, arg BindArg) error {
