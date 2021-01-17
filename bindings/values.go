@@ -107,7 +107,7 @@ func (vm *ValueMap) GetString(v Var) string {
 // GetStream returns the ValueStream associated with the Map. The Map must be a
 // nested member of this ValueMap.Vars, otherwise the result will be bogus.
 func (vm *ValueMap) GetStream(m *Map) ValueStream {
-	if len(vm.streams) <= vm.Vars.idxInParent {
+	if len(vm.streams) <= m.idxInParent {
 		return nil
 	}
 	return vm.streams[m.idxInParent]
