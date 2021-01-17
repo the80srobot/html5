@@ -140,7 +140,7 @@ func (vm *ValueMap) DebugDump(w io.Writer, depth int) {
 	}
 
 	for i, nm := range vm.Vars.maps {
-		fmt.Fprintf(w, "%s\tnested map %d/%d:\n", indent, i+1, len(vm.Vars.maps))
+		fmt.Fprintf(w, "%s\tnested map %d/%d %q@%d:\n", indent, i+1, len(vm.Vars.maps), nm.nameInParent, nm.idxInParent)
 		stream := vm.GetStream(nm)
 		if stream == nil {
 			fmt.Fprintf(w, "%s\t\t(empty)\n", indent)

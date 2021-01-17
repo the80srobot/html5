@@ -79,7 +79,7 @@ type BindArg struct {
 func (a BindArg) String() string {
 	var sb strings.Builder
 
-	sb.WriteString("BindArg{")
+	sb.WriteString("BindArg{ ")
 	a.describe(&sb)
 	sb.WriteString("}")
 	return sb.String()
