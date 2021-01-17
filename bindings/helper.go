@@ -106,7 +106,7 @@ func (a BindArg) describe(w io.Writer) {
 // DebugDump writes a verbose description of the BindArg to the writer. Depth
 // can be used to indent output with tabs.
 func (a BindArg) DebugDump(w io.Writer, depth int) {
-	indent := strings.Repeat("\t", depth)
+	indent := strings.Repeat("  ", depth)
 	io.WriteString(w, indent)
 	io.WriteString(w, "BindArg{")
 	a.describe(w)
@@ -114,13 +114,13 @@ func (a BindArg) DebugDump(w io.Writer, depth int) {
 	for i, row := range a.NestedRows {
 		fmt.Fprintf(w, "\n%s\trow %d/%d:\n", indent, i+1, len(a.NestedRows))
 		for _, col := range row {
-			col.DebugDump(w, depth+1)
+			col.DebugDump(w, depth+2)
 		}
 	}
 	if len(a.NestedRows) != 0 {
 		fmt.Fprintf(w, "\n%s", indent)
 	}
-	io.WriteString(w, "}")
+	io.WriteString(w, "}\n")
 }
 
 func bindSubsection(vm *ValueMap, arg BindArg) error {
