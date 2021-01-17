@@ -112,7 +112,7 @@ func (a BindArg) DebugDump(w io.Writer, depth int) {
 	a.describe(w)
 
 	for i, row := range a.NestedRows {
-		fmt.Fprintf(w, "\n%s\trow %d/%d: ", indent, i+1, len(a.NestedRows))
+		fmt.Fprintf(w, "\n%s\trow %d/%d:\n", indent, i+1, len(a.NestedRows))
 		for _, col := range row {
 			col.DebugDump(w, depth+1)
 		}

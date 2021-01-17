@@ -20,6 +20,9 @@ type Var struct {
 }
 
 func (v Var) String() string {
+	if v == ZeroVar {
+		return "ZeroVar"
+	}
 	return fmt.Sprintf("Var{%d, %q, %v}", v.idx, v.name, v.level)
 }
 
