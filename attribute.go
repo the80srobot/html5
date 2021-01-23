@@ -44,8 +44,9 @@ func appendAttribute(tc *templateCompiler, a *AttributeNode) error {
 	if !ok {
 		if strings.HasPrefix(a.Name, "data-") {
 			reqTrust = safe.Default
+		} else {
+			reqTrust = safe.FullyTrusted
 		}
-		reqTrust = safe.FullyTrusted
 	}
 	reqTrust = safe.Max(reqTrust, a.RequiredTrust)
 
