@@ -3,18 +3,24 @@ package html5
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/the80srobot/html5/bindings"
 	"github.com/the80srobot/html5/safe"
 )
 
 type AttributeNode struct {
-	Name  string
-	Value Value
+	Name          string
+	Value         Value
+	RequiredTrust safe.TrustLevel
 }
 
 func Attribute(name string, value Value) *AttributeNode {
-	return &AttributeNode{name, value}
+	return &AttributeNode{Name: name, Value: value}
+}
+
+func DataAttribute(name string, value Value, trust safe.TrustLevel) *AttributeNode {
+	return &AttributeNode{Name: "data-" + name, Value: value, RequiredTrust: trust}
 }
 
 // Apply will insert the attribute into the node, which must be ElementNode.
@@ -36,8 +42,12 @@ func appendAttribute(tc *templateCompiler, a *AttributeNode) error {
 	// contains URLs).
 	reqTrust, ok := requiredTrustPerAttribute[a.Name]
 	if !ok {
+		if strings.HasPrefix(a.Name, "data-") {
+			reqTrust = safe.Default
+		}
 		reqTrust = safe.FullyTrusted
 	}
+	reqTrust = safe.Max(reqTrust, a.RequiredTrust)
 
 	switch v := a.Value.(type) {
 	case safe.String:
