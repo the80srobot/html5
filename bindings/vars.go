@@ -57,7 +57,7 @@ func (v Var) tryBind(ss safe.String) (Value, error) {
 // Bind returns a Value created by binding the provided string to this Var.
 func (v Var) Bind(ss safe.String) Value {
 	value, err := v.tryBind(ss)
-	value.setError = err
+	value.trustErr = err
 	return value
 }
 
@@ -202,6 +202,10 @@ func (m *Map) BindSeries(maps ...*ValueMap) Value {
 // DebugName returns a name of this map, or "root" if it isn't nested. Used for
 // debugging only.
 func (m *Map) DebugName() string {
+	if m == nil {
+		return "<nil>"
+	}
+
 	if m.Root() {
 		return "root"
 	}

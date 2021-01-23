@@ -17,7 +17,7 @@ type Value struct {
 	idx                    int
 	value                  string
 	stream                 ValueStream
-	setError               error
+	trustErr               error
 	debugOnlyName          string
 	checkOnlyContainingMap *Map
 }
@@ -73,11 +73,11 @@ func (vm *ValueMap) setValue(v Value) error {
 // Set the Value on this ValueMap. The Value must be associated to a Var or
 // nested Map declared in this ValueMap.Vars, otherwise Set will panic.
 func (vm *ValueMap) Set(v Value) error {
+	if v.trustErr != nil {
+		return fmt.Errorf("value %q could not be set: %w", v.debugOnlyName, v.trustErr)
+	}
 	if v.checkOnlyContainingMap != vm.Vars {
 		panic(fmt.Sprintf("%v is bound to the map %q, this ValueMap is instantiated from %q (programmer error - variable used in wrong context)", v, v.checkOnlyContainingMap.DebugName(), vm.Vars.DebugName()))
-	}
-	if v.setError != nil {
-		return fmt.Errorf("value %q could not be set: %w", v.debugOnlyName, v.setError)
 	}
 	if v.stream != nil {
 		return vm.setNestedMapStream(v)
