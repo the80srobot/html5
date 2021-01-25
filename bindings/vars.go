@@ -57,7 +57,12 @@ func (v Var) tryBind(ss safe.String) (Value, error) {
 // Bind returns a Value created by binding the provided string to this Var.
 func (v Var) Bind(ss safe.String) Value {
 	value, err := v.tryBind(ss)
-	value.trustErr = err
+	if err != nil {
+		return Value{
+			debugOnlyName: v.name,
+			trustErr:      err,
+		}
+	}
 	return value
 }
 
