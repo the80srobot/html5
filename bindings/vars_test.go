@@ -182,7 +182,7 @@ func TestNestedMapWrongBindingSet(t *testing.T) {
 }
 
 func TestVarAttach(t *testing.T) {
-	v := Declare("foo")
+	v := Declare("foo", safe.Default)
 	var m Map
 
 	v = m.Attach(v, safe.Default)

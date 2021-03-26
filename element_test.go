@@ -60,10 +60,10 @@ func TestElementNode(t *testing.T) {
 		{
 			comment: "bindings",
 			input: Element("a",
-				Attribute("href", bindings.Declare("href")),
-				Attribute("rel", bindings.Declare("rel")),
-				Attribute("target", bindings.Declare("target")),
-				Text(bindings.Declare("hello")),
+				Attribute("href", bindings.Declare("href", safe.Default)),
+				Attribute("rel", bindings.Declare("rel", safe.Default)),
+				Attribute("target", bindings.Declare("target", safe.Default)),
+				Text(bindings.Declare("hello", safe.Default)),
 			),
 			values: []bindings.BindArg{
 				{Name: "href", Value: safe.Const("#title_1")},

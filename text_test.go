@@ -42,14 +42,14 @@ func TestTextNode(t *testing.T) {
 		},
 		{
 			comment: "binding",
-			input:   &TextNode{Value: bindings.Declare("hello")},
+			input:   &TextNode{Value: bindings.Declare("hello", safe.Default)},
 			opts:    &CompileOptions{},
 			values:  []bindings.BindArg{{Name: "hello", Value: safe.Const("Hello, World!")}},
 			output:  "Hello, World!",
 		},
 		{
 			comment: "untrusted binding",
-			input:   &TextNode{Value: bindings.Declare("hello")},
+			input:   &TextNode{Value: bindings.Declare("hello", safe.Default)},
 			opts:    &CompileOptions{},
 			values:  []bindings.BindArg{{Name: "hello", Value: safe.EscapeText("<p>Hello, World!</p>")}},
 			output:  "&lt;p&gt;Hello, World!&lt;/p&gt;",

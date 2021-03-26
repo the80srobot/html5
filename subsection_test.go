@@ -22,9 +22,9 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: bindings.Declare("user")},
+						&TextNode{Value: bindings.Declare("user", safe.Default)},
 						&TextNode{Value: safe.Const(" says ")},
-						&TextNode{Value: bindings.Declare("comment")},
+						&TextNode{Value: bindings.Declare("comment", safe.Default)},
 						&TextNode{Value: safe.Const("\n")},
 					},
 				},
@@ -47,12 +47,12 @@ func TestSubsection(t *testing.T) {
 				Name: "user_comments",
 				Prototype: &MultiNode{
 					Contents: []Node{
-						&TextNode{Value: bindings.Declare("user")},
+						&TextNode{Value: bindings.Declare("user", safe.Default)},
 						&TextNode{Value: safe.Const(" says ")},
-						&TextNode{Value: bindings.Declare("comment")},
+						&TextNode{Value: bindings.Declare("comment", safe.Default)},
 						&SubsectionNode{
 							Name:      "comment_replies",
-							Prototype: &TextNode{Value: bindings.Declare("reply")},
+							Prototype: &TextNode{Value: bindings.Declare("reply", safe.Default)},
 						},
 						&TextNode{Value: safe.Const("\n")},
 					},

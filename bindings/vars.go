@@ -39,11 +39,11 @@ var ZeroVar = Var{}
 
 // Declare an unnatached Var as a placeholder. Unnatached Vars cannot be used
 // with ValueMaps, but can be converted to attached Vars using Map.Attach.
-func Declare(name string) Var {
+func Declare(name string, l safe.TrustLevel) Var {
 	if name == "" {
 		panic("Var name cannot be empty")
 	}
-	return Var{name: name, level: safe.Untrusted}
+	return Var{name: name, level: l}
 }
 
 func (v Var) tryBind(ss safe.String) (Value, error) {
