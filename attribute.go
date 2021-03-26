@@ -70,7 +70,7 @@ func appendAttribute(tc *templateCompiler, a *AttributeNode) error {
 // Lists the required trust level for the content of known HTML attributes. If
 // an attribute is not on this list, then assume FullyTrusted is required.
 //
-// Current spec: https://html.spec.whatwg.org/#attributes-3
+// Current spec: https://html.spec.whatwg.org/multipage/indices.html#attributes-3
 var requiredTrustPerAttribute = map[string]safe.TrustLevel{
 	"accept":          safe.AttributeSafe,
 	"accept-charset":  safe.FullyTrusted,
