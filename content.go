@@ -37,3 +37,19 @@ func SelfClosing() Content {
 	}
 	return NodeOption(f)
 }
+
+// XMLElement marks the element as non-HTML and overrides any HTML-derived
+// defaults based on the element name.
+func XMLElement() Content {
+	f := func(n Node) error {
+		switch n := n.(type) {
+		case *ElementNode:
+			n.SelfClosing = false
+			n.XMLStyleSelfClosing = false
+		default:
+			return fmt.Errorf("XMLElement option cannot be applied to node %v", n)
+		}
+		return nil
+	}
+	return NodeOption(f)
+}
